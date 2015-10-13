@@ -1,0 +1,14 @@
+{
+  'env': {
+    'browser': true,
+    'meteor': true,
+    'es6': true
+  },
+  'globals': {
+    'THREE': false,
+  },
+  'rules': {
+    'quotes': [1, 'single'],
+    'strict': [1, 'never']
+  }
+}
