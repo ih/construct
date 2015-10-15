@@ -7,7 +7,7 @@ class Construct {
     this.screenHeight = window.innerHeight;
     this.initKeyboard();
     this.initCamera();
-    //this.initMouse();
+    this.initMouse();
     this.initRenderer();
     this.initEvents();
     this.initLight();
@@ -21,7 +21,7 @@ class Construct {
   }
 
   initMouse() {
-    var controlsEnabled = false;
+    this.controlsEnabled = false;
     var havePointerLock = (
       'pointerLockElement' in document ||
         'mozPointerLockElement' in document ||
@@ -29,14 +29,16 @@ class Construct {
 
     if (havePointerLock) {
       this.controls = new THREE.PointerLockControls(this.camera);
+      this.scene.add(this.controls.getObject());
       var element = document.body;
 
+      var self = this;
       function pointerlockchange(event) {
-        if (document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
-          controlsEnabled = true;
-          this.controls.enabled = true;
+        if (document.pointerLockElement === element) {
+          this.controlsEnabled = true;
+          self.controls.enabled = true;
         } else {
-          this.controls.enabled = false;
+          self.controls.enabled = false;
         }
       };
 
@@ -45,16 +47,11 @@ class Construct {
 
       // Hook pointer lock state change events
       document.addEventListener( 'pointerlockchange', pointerlockchange, false );
-      document.addEventListener( 'mozpointerlockchange', pointerlockchange, false );
-      document.addEventListener( 'webkitpointerlockchange', pointerlockchange, false );
 
       document.addEventListener( 'pointerlockerror', pointerlockerror, false );
-      document.addEventListener( 'mozpointerlockerror', pointerlockerror, false );
-      document.addEventListener( 'webkitpointerlockerror', pointerlockerror, false );
 
-      instructions.addEventListener( 'click', function ( event ) {
+      element.addEventListener( 'click', function ( event ) {
 
-        instructions.style.display = 'none';
 
         // Ask the browser to lock the pointer
         element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
@@ -90,7 +87,6 @@ class Construct {
 
     } else {
 
-      instructions.innerHTML = 'Your browser doesn\'t seem to support Pointer Lock API';
 
     }
 
@@ -100,9 +96,9 @@ class Construct {
     var [VIEW_ANGLE, ASPECT] = [45, this.screenWidth / this.screenHeight];
     var [NEAR, FAR] = [.1, 20000];
     this.camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
-    this.camera.position.set(0, 150, 400);
-    this.scene.add(this.camera);
-    this.camera.lookAt(this.scene.position);
+    // this.camera.position.set(0, 150, 400);
+
+    // this.camera.lookAt(this.scene.position);
   }
 
   initRenderer() {
