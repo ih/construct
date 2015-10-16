@@ -1,5 +1,6 @@
 var Objects = new Mongo.Collection('objects');
 // https://github.com/josdirksen/learning-threejs/blob/master/chapter-09/07-first-person-camera.html
+
 class Construct {
   constructor($container) {
     this.scene = new THREE.Scene();
@@ -17,7 +18,61 @@ class Construct {
   }
 
   initKeyboard() {
-    this.keyboard = new THREEx.KeyboardState();
+    var self = this;
+    this.prevTime = performance.now();
+    this.velocity = new THREE.Vector3();
+    var onKeyUp = function (event) {
+      switch( event.keyCode ) {
+
+      case 38: // up
+      case 87: // w
+        self.moveForward = false;
+        break;
+
+      case 37: // left
+      case 65: // a
+        self.moveLeft = false;
+        break;
+
+      case 40: // down
+      case 83: // s
+        self.moveBackward = false;
+        break;
+
+      case 39: // right
+      case 68: // d
+        self.moveRight = false;
+        break;
+      }
+    };
+
+    var onKeyDown = function (event) {
+      switch ( event.keyCode ) {
+      case 38: // up
+      case 87: // w
+        console.log('moving forward');
+        self.moveForward = true;
+        break;
+
+      case 37: // left
+      case 65: // a
+        self.moveLeft = true; break;
+
+      case 40: // down
+      case 83: // s
+        self.moveBackward = true;
+        break;
+
+      case 39: // right
+      case 68: // d
+        self.moveRight = true;
+        break;
+      }
+    };
+
+    document.addEventListener( 'keydown', onKeyDown, false );
+    document.addEventListener( 'keyup', onKeyUp, false );
+
   }
 
   initMouse() {
@@ -47,47 +102,15 @@ class Construct {
 
       // Hook pointer lock state change events
       document.addEventListener( 'pointerlockchange', pointerlockchange, false );
-
       document.addEventListener( 'pointerlockerror', pointerlockerror, false );
-
       element.addEventListener( 'click', function ( event ) {
-
-
         // Ask the browser to lock the pointer
         element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
-
-        if ( /Firefox/i.test( navigator.userAgent ) ) {
-
-          var fullscreenchange = function ( event ) {
-
-            if ( document.fullscreenElement === element || document.mozFullscreenElement === element || document.mozFullScreenElement === element ) {
-
-              document.removeEventListener( 'fullscreenchange', fullscreenchange );
-              document.removeEventListener( 'mozfullscreenchange', fullscreenchange );
-
-              element.requestPointerLock();
-            }
-
-          };
-
-          document.addEventListener( 'fullscreenchange', fullscreenchange, false );
-          document.addEventListener( 'mozfullscreenchange', fullscreenchange, false );
-
-          element.requestFullscreen = element.requestFullscreen || element.mozRequestFullscreen || element.mozRequestFullScreen || element.webkitRequestFullscreen;
-
-          element.requestFullscreen();
-
-        } else {
-
-          element.requestPointerLock();
-
-        }
-
+        element.requestPointerLock();
       }, false );
 
     } else {
-
-
+      console.error('no pointerlock');
     }
 
   }
@@ -138,9 +161,32 @@ class Construct {
     this.renderer.render(this.scene, this.camera);
   }
 
-
-
   update() {
+    var time = performance.now();
+    var delta = (time - this.prevTime) / 1000;
+
+    this.velocity.x -= this.velocity.x * 10.0 * delta;
+    this.velocity.z -= this.velocity.z * 10.0 * delta;
+
+    if (this.moveForward) {
+      this.velocity.z -= 400.0 * delta;
+    }
+    if (this.moveBackward) {
+      this.velocity.z += 400.0 * delta;
+    }
+
+    if (this.moveLeft) {
+      this.velocity.x -= 400.0 * delta;
+    }
+    if (this.moveRight) {
+      this.velocity.x += 400.0 * delta;
+    }
+
+    this.controls.getObject().translateX( this.velocity.x * delta );
+    this.controls.getObject().translateY( this.velocity.y * delta );
+    this.controls.getObject().translateZ( this.velocity.z * delta );
+
+    this.prevTime = time;
   }
 
 }
@@ -153,7 +199,7 @@ Template.hello.onRendered(function () {
   function animate() {
     requestAnimationFrame(animate);
     construct.render();
-    // this.update();
+    construct.update();
   }
   animate();
 });
