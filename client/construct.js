@@ -6,6 +6,7 @@ class Construct {
     this.scene = new THREE.Scene();
     this.screenWidth = window.innerWidth;
     this.screenHeight = window.innerHeight;
+    this.loadObjects();
     this.initKeyboard();
     this.initCamera();
     this.initMouse();
@@ -15,6 +16,15 @@ class Construct {
     this.initFloor();
 
     $container.append(this.renderer.domElement);
+  }
+
+  loadObjects() {
+    var self = this;
+    Objects.find().forEach( function (object) {
+      console.log(object);
+      var initializeObject = eval(object.initialize);
+      initializeObject(self.scene);
+    });
   }
 
   initKeyboard() {
