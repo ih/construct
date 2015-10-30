@@ -1,12 +1,17 @@
-var Objects = new Mongo.Collection('objects');
+var Programs = new Mongo.Collection('programs');
 // https://github.com/josdirksen/learning-threejs/blob/master/chapter-09/07-first-person-camera.html
 
+
 class Construct {
-  constructor($container) {
+  constructor($container, user) {
     this.scene = new THREE.Scene();
     this.screenWidth = window.innerWidth;
     this.screenHeight = window.innerHeight;
-    this.loadObjects();
+    this.renderedObjects = {};
+    // set by loadPrograms
+    this.userProgram = null;
+
+    this.loadPrograms(user);
     this.initKeyboard();
     this.initCamera();
     this.initMouse();
@@ -18,19 +23,23 @@ class Construct {
     $container.append(this.renderer.domElement);
   }
 
-  loadObjects() {
+  loadPrograms() {
     var self = this;
-    Objects.find().forEach( function (object) {
-      console.log(object);
-      var initializeObject = eval(object.initialize);
-      initializeObject(self.scene);
+    Programs.find().forEach((program) => {
+      console.log(program);
+      if (program.type && program.type === 'user' && program.userId === Meteor.userId()) {
+        this.userProgram = program;
+      }
+      var initializeProgram = eval(program.initialize);
+      var renderedObjects = initializeProgram(self.scene, program);
+      this.renderedObjects[program._id] = renderedObjects;
     });
   }
 
   initKeyboard() {
     var self = this;
     this.prevTime = performance.now();
-    this.velocity = new THREE.Vector3();
+    this.velocity = {x: null, y: null, z: null};
     var onKeyUp = function (event) {
       switch( event.keyCode ) {
 
@@ -173,43 +182,65 @@ class Construct {
 
   update() {
     var time = performance.now();
-    var delta = (time - this.prevTime) / 1000;
+    this.delta = (time - this.prevTime) / 1000;
 
-    this.velocity.x -= this.velocity.x * 10.0 * delta;
-    this.velocity.z -= this.velocity.z * 10.0 * delta;
+    var self = this;
+
+    this.updatePrograms();
+
+
+    this.velocity.x -= this.velocity.x * 10.0 * this.delta;
+    this.velocity.z -= this.velocity.z * 10.0 * this.delta;
 
     if (this.moveForward) {
-      this.velocity.z -= 400.0 * delta;
+      this.velocity.z -= 400.0 * this.delta;
     }
     if (this.moveBackward) {
-      this.velocity.z += 400.0 * delta;
+      this.velocity.z += 400.0 * this.delta;
     }
 
     if (this.moveLeft) {
-      this.velocity.x -= 400.0 * delta;
+      this.velocity.x -= 400.0 * this.delta;
     }
     if (this.moveRight) {
-      this.velocity.x += 400.0 * delta;
+      this.velocity.x += 400.0 * this.delta;
     }
 
-    this.controls.getObject().translateX( this.velocity.x * delta );
-    this.controls.getObject().translateY( this.velocity.y * delta );
-    this.controls.getObject().translateZ( this.velocity.z * delta );
+    this.controls.getObject().translateX( this.velocity.x * this.delta );
+    this.controls.getObject().translateY( this.velocity.y * this.delta );
+    this.controls.getObject().translateZ( this.velocity.z * this.delta );
+
+    console.log('client velocity:' + JSON.stringify(this.controls.getObject().velocity));
+    console.log('client position:' + JSON.stringify(this.controls.getObject().position));
+
+    Programs.update({_id: this.userProgram._id}, {$set: {
+      velocity: this.velocity,
+      position: this.controls.getObject().position}});
 
     this.prevTime = time;
   }
 
+  updatePrograms() {
+    Programs.find().forEach((program) => {
+      // this doesn't need to happen each update
+      var updateProgram = eval(program.update);
+      updateProgram(this.renderedObjects[program._id], program);
+    });
+  }
 }
 
 
 
 Template.hello.onRendered(function () {
   var $container = this.$('.world');
-  var construct = new Construct($container);
-  function animate() {
-    requestAnimationFrame(animate);
-    construct.render();
-    construct.update();
+  var user = Meteor.user();
+  if (user) {
+  var construct = new Construct($container, user);
+    function animate() {
+      requestAnimationFrame(animate);
+      construct.render();
+      construct.update();
+    }
+    animate();
   }
-  animate();
 });

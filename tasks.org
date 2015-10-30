@@ -1,4 +1,10 @@
-* load a cube into the construct
+* NEXT
+** make the user loadable
+we want to store the position and the velocity in each direction for all objects
+** update user velocity/position in the collection
+implement update function for users
+** look at example programs for what abstractions might look like
+* COMPLETED
+** DONE add accounts
+** DONE load a cube into the construct
 stored in mongo as code
-* add accounts
-* make the user loadable
