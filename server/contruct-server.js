@@ -82,9 +82,9 @@ Accounts.onCreateUser(function(options, user) {
       user.translateX(deltaX);
       user.translateY(deltaY);
       user.translateZ(deltaZ);
-      console.log('db velocity:' + JSON.stringify(self.velocity));
-      console.log('db position:' + JSON.stringify(self.position));
-      console.log('db user position:' + JSON.stringify(user.position));
+      // console.log('db velocity:' + JSON.stringify(self.velocity));
+      // console.log('db position:' + JSON.stringify(self.position));
+      // console.log('db user position:' + JSON.stringify(user.position));
     }
     `
   });

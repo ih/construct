@@ -210,13 +210,13 @@ class Construct {
     this.controls.getObject().translateY( this.velocity.y * this.delta );
     this.controls.getObject().translateZ( this.velocity.z * this.delta );
 
-    console.log('client velocity:' + JSON.stringify(this.controls.getObject().velocity));
-    console.log('client position:' + JSON.stringify(this.controls.getObject().position));
-
-    Programs.update({_id: this.userProgram._id}, {$set: {
-      velocity: this.velocity,
-      position: this.controls.getObject().position}});
-
+    if (Math.abs(this.velocity.x) > 0 || Math.abs(this.velocity.y) > 0 || Math.abs(this.velocity.z) > 0) {
+      console.log('client velocity:' + JSON.stringify(this.controls.getObject().velocity));
+      console.log('client position:' + JSON.stringify(this.controls.getObject().position));
+      Programs.update({_id: this.userProgram._id}, {$set: {
+        velocity: this.velocity,
+        position: this.controls.getObject().position}});
+    }
     this.prevTime = time;
   }
 
