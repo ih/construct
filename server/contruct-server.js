@@ -1,5 +1,21 @@
 var Programs = new Mongo.Collection('programs');
 
+Programs.allow({
+  insert: function (userId, doc) {
+    return true;
+  },
+  update: function (userId, doc) {
+    return true;
+  },
+  remove: function (userId, doc) {
+    return true;
+  }
+});
+
+Meteor.publish('all-programs', function () {
+  return Programs.find();
+});
+
 Meteor.startup(function () {
   if (Programs.find().count() === 0) {
     console.log('adding init program');

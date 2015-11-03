@@ -1,10 +1,14 @@
 * NEXT
-** make the user loadable
-we want to store the position and the velocity in each direction for all objects
-** update user velocity/position in the collection
-implement update function for users
+** add disance based publication
+** make code accessible from inside world
+** be able to upload programs
 ** look at example programs for what abstractions might look like
 * COMPLETED
+** DONE remove autopublish
+** DONE update user velocity/position in the collection
+implement update function for users
+** DONE make the user loadable
+we want to store the position and the velocity in each direction for all objects
 ** DONE add accounts
 ** DONE load a cube into the construct
 stored in mongo as code

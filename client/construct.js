@@ -1,9 +1,11 @@
 var Programs = new Mongo.Collection('programs');
 // https://github.com/josdirksen/learning-threejs/blob/master/chapter-09/07-first-person-camera.html
 
+Meteor.subscribe('all-programs');
 
 class Construct {
   constructor($container, user) {
+    console.log('initializing the construct');
     this.scene = new THREE.Scene();
     this.screenWidth = window.innerWidth;
     this.screenHeight = window.innerHeight;
@@ -28,11 +30,11 @@ class Construct {
     Programs.find().forEach((program) => {
       console.log(program);
       if (program.type && program.type === 'user' && program.userId === Meteor.userId()) {
-        this.userProgram = program;
+        self.userProgram = program;
       }
       var initializeProgram = eval(program.initialize);
       var renderedObjects = initializeProgram(self.scene, program);
-      this.renderedObjects[program._id] = renderedObjects;
+      self.renderedObjects[program._id] = renderedObjects;
     });
   }
 
@@ -221,10 +223,11 @@ class Construct {
   }
 
   updatePrograms() {
+    var self = this;
     Programs.find().forEach((program) => {
       // this doesn't need to happen each update
       var updateProgram = eval(program.update);
-      updateProgram(this.renderedObjects[program._id], program);
+      updateProgram(self.renderedObjects[program._id], program);
     });
   }
 }
