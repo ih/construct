@@ -34,7 +34,7 @@ Meteor.startup(function () {
       `
       (scene, self) => {
         var geometry = new THREE.CubeGeometry(100, 100, 100);
-        var material = new THREE.MeshBasicMaterial({color: 0x00ff00});
+        var material = new THREE.MeshBasicMaterial({color: '#00ff00'});
         var position = self.position;
         var cube = new THREE.Mesh(geometry, material);
         cube.position.set(position.x, position.y, position.z);
@@ -54,7 +54,7 @@ Meteor.startup(function () {
   if (Meteor.users.find().count() === 0) {
     console.log('creating the first user');
     Accounts.createUser({
-      email: 'admin@construct.club',
+      email: 'architect@construct.club',
       password: 'password'
     });
   }
@@ -80,7 +80,7 @@ Accounts.onCreateUser(function(options, user) {
     `
     (scene, self) => {
       var geometry = new THREE.CubeGeometry(10, 10, 10);
-      var material = new THREE.MeshBasicMaterial({color: 0x0000ff});
+      var material = new THREE.MeshBasicMaterial({color: Utility.randomColor()});
       var position = self.position;
       var cube = new THREE.Mesh(geometry, material);
       cube.position.set(position.x, position.y, position.z);
