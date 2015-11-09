@@ -1,7 +1,10 @@
 * NEXT
-** add disance based publication
 ** make code accessible from inside world
+*** add editor
+create a surface which can display a web page and put ace editor on the page?
+maybe something like Monitor.js in RiftSketch
 ** be able to upload programs
+** add disance based publication
 ** look at example programs for what abstractions might look like
 * COMPLETED
 ** DONE remove autopublish

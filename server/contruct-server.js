@@ -22,7 +22,7 @@ Meteor.startup(function () {
     Programs.insert({
       position: {
         x: -200,
-        y: 70,
+        y: 100,
         z: -100
       },
       velocity: {
@@ -71,16 +71,12 @@ Accounts.onCreateUser(function(options, user) {
       y: 0,
       z: 0
     },
-    velocity: {
-      x: 0,
-      y: 0,
-      z: 0
-    },
+    color: Utility.randomColor(),
     initialize:
     `
     (scene, self) => {
       var geometry = new THREE.CubeGeometry(10, 10, 10);
-      var material = new THREE.MeshBasicMaterial({color: Utility.randomColor()});
+      var material = new THREE.MeshBasicMaterial({color: self.color});
       var position = self.position;
       var cube = new THREE.Mesh(geometry, material);
       cube.position.set(position.x, position.y, position.z);
@@ -98,9 +94,6 @@ Accounts.onCreateUser(function(options, user) {
       user.translateX(deltaX);
       user.translateY(deltaY);
       user.translateZ(deltaZ);
-      // console.log('db velocity:' + JSON.stringify(self.velocity));
-      // console.log('db position:' + JSON.stringify(self.position));
-      // console.log('db user position:' + JSON.stringify(user.position));
     }
     `
   });

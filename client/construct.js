@@ -7,34 +7,59 @@ class Construct {
   constructor($container, user) {
     console.log('initializing the construct');
     this.scene = new THREE.Scene();
+    this.cssScene = new THREE.Scene();
     this.screenWidth = window.innerWidth;
     this.screenHeight = window.innerHeight;
     this.renderedObjects = {};
     // set by loadPrograms
     this.userProgram = null;
 
-    this.loadPrograms(user);
+    this.initPrograms(user);
     this.initKeyboard();
     this.initCamera();
     this.initMouse();
-    this.initRenderer();
+    this.initGLRenderer();
+    this.initCSSRenderer();
     this.initEvents();
     this.initLight();
     this.initFloor();
+    // temporary
+    this.createScreen();
 
-    $container.append(this.renderer.domElement);
+    $container.append(this.cssRenderer.domElement);
+    this.cssRenderer.domElement.appendChild(this.glRenderer.domElement);
+    //$container.append(this.glRenderer.domElement);
+
   }
 
-  loadPrograms() {
+  createScreen() {
+    var editor = new Editor(100, 100, new THREE.Vector3(10, 10, 10),
+      new THREE.Vector3(0, 45 * Math.PI / 180, 0),
+      'https://www.skillshare.com');
+
+    editor.addToScene(this.scene, this.cssScene);
+  }
+
+  initPrograms() {
     var self = this;
     Programs.find().forEach((program) => {
       console.log(program);
       if (program.type && program.type === 'user' && program.userId === Meteor.userId()) {
         self.userProgram = program;
       }
-      var initializeProgram = eval(program.initialize);
-      var renderedObjects = initializeProgram(self.scene, program);
-      self.renderedObjects[program._id] = renderedObjects;
+      try {
+        var initializeProgram = eval(program.initialize);
+
+        var renderedObjects = initializeProgram(self.scene, program);
+
+        renderedObjects.updateProgram = eval(program.update);
+
+        self.renderedObjects[program._id] = renderedObjects;
+      } catch (error) {
+        var errorString = JSON.stringify(error);
+        console.warn(
+          `Problem initializing program ${program._id}: ${errorString}`);
+      }
     });
   }
 
@@ -145,17 +170,29 @@ class Construct {
     // this.camera.lookAt(this.scene.position);
   }
 
-  initRenderer() {
+  initGLRenderer() {
     if (Detector.webgl) {
-      this.renderer = new THREE.WebGLRenderer( {antialias: true} );
+      this.glRenderer = new THREE.WebGLRenderer( {antialias: true, alpha: true} );
     } else {
-      this.renderer = new THREE.CanvasRenderer();
+      this.glRenderer = new THREE.CanvasRenderer();
     }
-    this.renderer.setSize(this.screenWidth, this.screenHeight);
+    this.glRenderer.setSize(this.screenWidth, this.screenHeight);
+    this.glRenderer.domElement.style.position = 'absolute';
+    this.glRenderer.domElement.style.top = 0;
+    this.glRenderer.domElement.style.zIndex = 1;
+  }
+
+  initCSSRenderer() {
+    this.cssRenderer = new THREE.CSS3DRenderer();
+    this.cssRenderer.setSize(this.screenWidth, this.screenHeight);
+    this.cssRenderer.domElement.style.position = 'absolute';
+    this.cssRenderer.domElement.style.zIndex = 0;
+    this.cssRenderer.domElement.style.top = 0;
   }
 
   initEvents() {
-    THREEx.WindowResize(this.renderer, this.camera);
+    THREEx.WindowResize(this.cssRenderer, this.camera);
+    THREEx.WindowResize(this.glRenderer, this.camera);
     THREEx.FullScreen.bindKey({charCode: 'm'.charCodeAt(0)});
   }
 
@@ -179,7 +216,8 @@ class Construct {
   }
 
   render() {
-    this.renderer.render(this.scene, this.camera);
+    this.glRenderer.render(this.scene, this.camera);
+    this.cssRenderer.render(this.cssScene, this.camera);
   }
 
   update() {
@@ -226,8 +264,14 @@ class Construct {
     var self = this;
     Programs.find().forEach((program) => {
       // this doesn't need to happen each update
-      var updateProgram = eval(program.update);
-      updateProgram(self.renderedObjects[program._id], program);
+      try {
+        var updateProgram = self.renderedObjects[program._id].updateProgram;
+        updateProgram(self.renderedObjects[program._id], program);
+      } catch (error) {
+        var errorString = JSON.stringify(error);
+        console.log(
+          `Problem updating program ${program._id}: ${errorString}`);
+      }
     });
   }
 }
