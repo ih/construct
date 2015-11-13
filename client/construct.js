@@ -38,6 +38,7 @@ class Construct {
       'https://www.skillshare.com');
 
     editor.addToScene(this.scene, this.cssScene);
+    editor.initializeEditor('editor');
   }
 
   initPrograms() {
@@ -250,8 +251,9 @@ class Construct {
     this.controls.getObject().translateY( this.velocity.y * this.delta );
     this.controls.getObject().translateZ( this.velocity.z * this.delta );
 
-    if (Math.abs(this.velocity.x) > 0 || Math.abs(this.velocity.y) > 0 || Math.abs(this.velocity.z) > 0) {
-      console.log('client velocity:' + JSON.stringify(this.controls.getObject().velocity));
+    if (Math.abs(Math.round(this.velocity.x)) > 0 || Math.abs(Math.round(this.velocity.y)) > 0 || Math.abs(Math.round(this.velocity.z)) > 0) {
+      console.log(performance.now());
+      console.log('client velocity:' + JSON.stringify(this.velocity));
       console.log('client position:' + JSON.stringify(this.controls.getObject().position));
       Programs.update({_id: this.userProgram._id}, {$set: {
         velocity: this.velocity,

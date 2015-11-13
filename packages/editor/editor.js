@@ -37,8 +37,12 @@ Editor = class Editor {
 
   createCssObject() {
     var html = `
-    <div style="width:' + ${this.width} + 'px; height:' + ${this.height} + 'px;">hello</div>
+    <div id="editor" style="width:' + ${this.width} + 'px; height:' + ${this.height} + 'px;">function foo(items) {
+      var x = "All this is syntax highlighted";
+      return x;
+      }</div>
     `;
+
     // var html = [
     //   '<div style="width:' + this.width + 'px; height:' + this.height + 'px;">',
     //   '<iframe src="' + this.content + '" width="' + this.width + '" height="' + this.height + '">',
@@ -46,7 +50,11 @@ Editor = class Editor {
     //   '</div>'
     // ].join('\n');
     var div = document.createElement('div');
+
+    // var editor = ace.edit(div);
     $(div).html(html);
+    // editor.setTheme("ace/theme/monokai");
+    // editor.getSession().setMode("ace/mode/javascript");
     var cssObject = new THREE.CSS3DObject(div);
     cssObject.position.x = this.position.x;
     cssObject.position.y = this.position.y;
@@ -55,6 +63,15 @@ Editor = class Editor {
     cssObject.rotation.y = this.rotation.y;
     cssObject.rotation.z = this.rotation.z;
     return cssObject;
+  }
+
+  initializeEditor(divId) {
+    var ace = AceEditor.instance(divId, {
+      theme:"dawn",
+      mode:"html"
+    }, function (editor) {
+      editor.insert('this is only a test');
+    });
   }
 
 }
