@@ -9,18 +9,18 @@ Editor = class Editor {
     this.rotation = rotation;
     this.content = content;
 
-    this.plane = this.createPlane();
+    //this.plane = this.createPlane();
     this.cssObject = this.createCssObject();
   }
 
   addToScene(glScene, cssScene) {
-    glScene.add(this.plane);
+    //glScene.add(this.plane);
     cssScene.add(this.cssObject);
   }
 
   createPlane() {
     var material = new THREE.MeshBasicMaterial({
-      color: 0xff0000,
+      color: 0x000000,
       opacity: 0.0,
       side: THREE.DoubleSide
     });
@@ -37,7 +37,7 @@ Editor = class Editor {
 
   createCssObject() {
     var html = `
-    <div id="editor" style="width:' + ${this.width} + 'px; height:' + ${this.height} + 'px;">function foo(items) {
+    <div id="editor" style="width:${this.width}px; height:${this.height}px;">function foo(items) {
       var x = "All this is syntax highlighted";
       return x;
       }</div>

@@ -11,6 +11,7 @@ class Construct {
     this.screenWidth = window.innerWidth;
     this.screenHeight = window.innerHeight;
     this.renderedObjects = {};
+    this.editorActive = false;
     // set by loadPrograms
     this.userProgram = null;
 
@@ -23,8 +24,9 @@ class Construct {
     this.initEvents();
     this.initLight();
     this.initFloor();
+    this.initEditor();
     // temporary
-    this.createScreen();
+    //this.createScreen();
 
     $container.append(this.cssRenderer.domElement);
     this.cssRenderer.domElement.appendChild(this.glRenderer.domElement);
@@ -33,12 +35,32 @@ class Construct {
   }
 
   createScreen() {
-    var editor = new Editor(100, 100, new THREE.Vector3(10, 10, 10),
+    var editor = new Editor(100, 100, new THREE.Vector3(10, 50, 10),
       new THREE.Vector3(0, 45 * Math.PI / 180, 0),
       'https://www.skillshare.com');
 
     editor.addToScene(this.scene, this.cssScene);
     editor.initializeEditor('editor');
+  }
+
+  initEditor() {
+    self.editor = AceEditor.instance('editor', {
+      theme:"dawn",
+      mode:"javascript"
+    }, function (editor) {
+      editor.insert('hallo world');
+    });
+    $('#editor').hide();
+  }
+
+  toggleEditor() {
+    if (this.editorActive) {
+      $('#editor').hide();
+      this.editorActive = false;
+    } else {
+      $('#editor').show();
+      this.editorActive = true;
+    }
   }
 
   initPrograms() {
@@ -94,6 +116,13 @@ class Construct {
     };
 
     var onKeyDown = function (event) {
+      if (event.keyCode === 69) {
+        self.toggleEditor();
+        return;
+      } else if (self.editorActive) {
+        return;
+      }
+
       switch ( event.keyCode ) {
       case 38: // up
       case 87: // w
@@ -114,6 +143,9 @@ class Construct {
       case 68: // d
         self.moveRight = true;
         break;
+      case 69: // e
+        this.toggleEditor();
+        break;
       }
     };
 
@@ -132,7 +164,7 @@ class Construct {
     if (havePointerLock) {
       this.controls = new THREE.PointerLockControls(this.camera);
       this.scene.add(this.controls.getObject());
-      var element = document.body;
+      var element = $('.enablePointer')[0];
 
       var self = this;
       function pointerlockchange(event) {
