@@ -164,6 +164,7 @@ class Construct {
     if (havePointerLock) {
       this.controls = new THREE.PointerLockControls(this.camera);
       this.scene.add(this.controls.getObject());
+      this.controls.getObject().position.copy(this.userProgram.position);
       var element = $('.enablePointer')[0];
 
       var self = this;
@@ -198,7 +199,6 @@ class Construct {
     var [VIEW_ANGLE, ASPECT] = [45, this.screenWidth / this.screenHeight];
     var [NEAR, FAR] = [.1, 20000];
     this.camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
-    // this.camera.position.set(0, 150, 400);
 
     // this.camera.lookAt(this.scene.position);
   }
