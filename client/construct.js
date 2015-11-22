@@ -12,7 +12,7 @@ class Construct {
     this.screenHeight = window.innerHeight;
     this.renderedObjects = {};
     this.editorActive = false;
-    // set by loadPrograms
+    // set by initPrograms
     this.userProgram = null;
 
     this.initPrograms(user);
@@ -34,20 +34,11 @@ class Construct {
 
   }
 
-  createScreen() {
-    var editor = new Editor(100, 100, new THREE.Vector3(10, 50, 10),
-      new THREE.Vector3(0, 45 * Math.PI / 180, 0),
-      'https://www.skillshare.com');
-
-    editor.addToScene(this.scene, this.cssScene);
-    editor.initializeEditor('editor');
-  }
-
   initEditor() {
     self.editor = AceEditor.instance('editor', {
-      theme:"dawn",
-      mode:"javascript"
-    }, function (editor) {
+      theme: 'dawn',
+      mode: 'javascript'
+    }, (editor) => {
       editor.insert('hallo world');
     });
     $('#editor').hide();
@@ -88,9 +79,8 @@ class Construct {
 
   initKeyboard() {
     var self = this;
-    this.prevTime = performance.now();
-    this.velocity = {x: null, y: null, z: null};
-    var onKeyUp = function (event) {
+
+    var onKeyUp = (event) => {
       switch( event.keyCode ) {
 
       case 38: // up
@@ -115,7 +105,7 @@ class Construct {
       }
     };
 
-    var onKeyDown = function (event) {
+    var onKeyDown = (event) => {
       if (event.keyCode === 69) {
         self.toggleEditor();
         return;
@@ -177,17 +167,17 @@ class Construct {
         }
       };
 
-      var pointerlockerror = function ( event ) {
+      var pointerlockerror = (event) => {
       };
 
       // Hook pointer lock state change events
-      document.addEventListener( 'pointerlockchange', pointerlockchange, false );
-      document.addEventListener( 'pointerlockerror', pointerlockerror, false );
-      element.addEventListener( 'click', function ( event ) {
+      document.addEventListener('pointerlockchange', pointerlockchange, false);
+      document.addEventListener('pointerlockerror', pointerlockerror, false);
+      element.addEventListener('click', (event) => {
         // Ask the browser to lock the pointer
         element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
         element.requestPointerLock();
-      }, false );
+      }, false);
 
     } else {
       console.error('no pointerlock');
@@ -254,44 +244,28 @@ class Construct {
   }
 
   update() {
-    var time = performance.now();
-    this.delta = (time - this.prevTime) / 1000;
-
-    var self = this;
+    var delta = 1;
 
     this.updatePrograms();
 
-
-    this.velocity.x -= this.velocity.x * 10.0 * this.delta;
-    this.velocity.z -= this.velocity.z * 10.0 * this.delta;
-
     if (this.moveForward) {
-      this.velocity.z -= 400.0 * this.delta;
+      this.controls.getObject().translateZ(-delta);
     }
     if (this.moveBackward) {
-      this.velocity.z += 400.0 * this.delta;
+      this.controls.getObject().translateZ(delta);
     }
 
     if (this.moveLeft) {
-      this.velocity.x -= 400.0 * this.delta;
+      this.controls.getObject().translateX(-delta);
     }
     if (this.moveRight) {
-      this.velocity.x += 400.0 * this.delta;
+      this.controls.getObject().translateX(delta);
     }
 
-    this.controls.getObject().translateX( this.velocity.x * this.delta );
-    this.controls.getObject().translateY( this.velocity.y * this.delta );
-    this.controls.getObject().translateZ( this.velocity.z * this.delta );
-
-    if (Math.abs(Math.round(this.velocity.x)) > 0 || Math.abs(Math.round(this.velocity.y)) > 0 || Math.abs(Math.round(this.velocity.z)) > 0) {
-      console.log(performance.now());
-      console.log('client velocity:' + JSON.stringify(this.velocity));
-      console.log('client position:' + JSON.stringify(this.controls.getObject().position));
+    if (this.moveForward || this.moveBackward || this.moveLeft || this.moveRight) {
       Programs.update({_id: this.userProgram._id}, {$set: {
-        velocity: this.velocity,
         position: this.controls.getObject().position}});
     }
-    this.prevTime = time;
   }
 
   updatePrograms() {
@@ -312,16 +286,25 @@ class Construct {
 
 
 
-Template.hello.onRendered(function () {
+Template.hello.onRendered(() => {
+
   var $container = this.$('.world');
-  var user = Meteor.user();
-  if (user) {
-  var construct = new Construct($container, user);
-    function animate() {
-      requestAnimationFrame(animate);
-      construct.render();
-      construct.update();
+
+
+  Tracker.autorun((computation) => {
+    var user = Meteor.user();
+    var userProgram = Programs.findOne({type: 'user', userId: Meteor.userId()});
+    console.log(`the user ${user}`);
+    console.log(`the userProgram ${userProgram}`);
+    if (user && userProgram) {
+      computation.stop();
+      var construct = new Construct($container, user);
+      function animate() {
+        requestAnimationFrame(animate);
+        construct.render();
+        construct.update();
+      }
+      animate();
     }
-    animate();
-  }
+  });
 });
