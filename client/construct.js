@@ -8,6 +8,9 @@ class Construct {
     console.log('initializing the construct');
     this.scene = new THREE.Scene();
     this.cssScene = new THREE.Scene();
+    //CX this.rayCaster = new THREE.Raycaster();
+    // this.mouse = new THREE.Vector2();
+    this.objectSelector = new ObjectSelector();
     this.screenWidth = window.innerWidth;
     this.screenHeight = window.innerHeight;
     this.renderedObjects = {};
@@ -57,8 +60,8 @@ class Construct {
   initPrograms() {
     var self = this;
     Programs.find().forEach((program) => {
-      console.log(program);
-      if (program.type && program.type === 'user' && program.userId === Meteor.userId()) {
+      if (program.type && program.type === 'user' &&
+          program.userId === Meteor.userId()) {
         self.userProgram = program;
       }
       try {
@@ -116,7 +119,6 @@ class Construct {
       switch ( event.keyCode ) {
       case 38: // up
       case 87: // w
-        console.log('moving forward');
         self.moveForward = true;
         break;
 
@@ -165,7 +167,7 @@ class Construct {
         } else {
           self.controls.enabled = false;
         }
-      };
+      }
 
       var pointerlockerror = (event) => {
       };
@@ -175,7 +177,9 @@ class Construct {
       document.addEventListener('pointerlockerror', pointerlockerror, false);
       element.addEventListener('click', (event) => {
         // Ask the browser to lock the pointer
-        element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
+        element.requestPointerLock = (
+          element.requestPointerLock || element.mozRequestPointerLock ||
+            element.webkitRequestPointerLock);
         element.requestPointerLock();
       }, false);
 
@@ -183,6 +187,12 @@ class Construct {
       console.error('no pointerlock');
     }
 
+    // // raycaster related
+    // function onMouseMove() {
+    //   self.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    //   self.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    // }
+    // window.addEventListener('mousemove', onMouseMove, false);
   }
 
   initCamera() {
@@ -230,7 +240,10 @@ class Construct {
       '/checkerboard.jpg');
     floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
     floorTexture.repeat.set( 10, 10 );
-    var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side: THREE.DoubleSide } );
+    var floorMaterial = new THREE.MeshBasicMaterial({
+      map: floorTexture,
+      side: THREE.DoubleSide
+    });
     var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 10, 10);
     this.floor = new THREE.Mesh(floorGeometry, floorMaterial);
     this.floor.position.y = -0.5;
@@ -239,6 +252,14 @@ class Construct {
   }
 
   render() {
+    if (!this.controls.enabled) {
+      this.objectSelector.selectObjects(this.scene, this.camera);
+      // this.rayCaster.setFromCamera(this.mouse, this.camera);
+      // var intersects = this.rayCaster.intersectObjects(this.scene.children);
+      // for (var i = 0; i < intersects.length; i++) {
+      //   intersects[i].object.material.color.set( 0xff0000 );
+      // }
+    }
     this.glRenderer.render(this.scene, this.camera);
     this.cssRenderer.render(this.cssScene, this.camera);
   }
@@ -262,7 +283,8 @@ class Construct {
       this.controls.getObject().translateX(delta);
     }
 
-    if (this.moveForward || this.moveBackward || this.moveLeft || this.moveRight) {
+    if (this.moveForward || this.moveBackward || this.moveLeft ||
+        this.moveRight) {
       Programs.update({_id: this.userProgram._id}, {$set: {
         position: this.controls.getObject().position}});
     }
@@ -290,12 +312,9 @@ Template.hello.onRendered(() => {
 
   var $container = this.$('.world');
 
-
   Tracker.autorun((computation) => {
     var user = Meteor.user();
     var userProgram = Programs.findOne({type: 'user', userId: Meteor.userId()});
-    console.log(`the user ${user}`);
-    console.log(`the userProgram ${userProgram}`);
     if (user && userProgram) {
       computation.stop();
       var construct = new Construct($container, user);

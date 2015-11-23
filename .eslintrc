@@ -6,9 +6,15 @@
   },
   'globals': {
     'THREE': false,
+    'Detector': false,
+    'THREEx': false,
+    'AceEditor': false
   },
   'rules': {
+    'no-underscore-dangle': [2, {'allow': ['_id']}],
     'quotes': [1, 'single'],
-    'strict': [1, 'never']
+    'strict': [1, 'never'],
+    'no-console': 1,
+    'no-eval': 0
   }
 }

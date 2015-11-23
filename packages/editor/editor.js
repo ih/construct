@@ -74,4 +74,4 @@ Editor = class Editor {
     });
   }
 
-}
+};
