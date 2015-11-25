@@ -33,6 +33,7 @@ Meteor.startup(function () {
         var position = self.position;
         var cube = new THREE.Mesh(geometry, material);
         cube.position.set(position.x, position.y, position.z);
+        cube.programId = self._id;
         scene.add(cube);
         return {cube: cube};
       }
@@ -75,6 +76,8 @@ Accounts.onCreateUser(function(options, user) {
       var position = self.position;
       var cube = new THREE.Mesh(geometry, material);
       cube.position.set(position.x, position.y, position.z);
+      // move this and scene to the construct
+      cube.programId = self._id;
       scene.add(cube);
       return {user: cube};
       }

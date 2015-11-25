@@ -8,8 +8,6 @@ class Construct {
     console.log('initializing the construct');
     this.scene = new THREE.Scene();
     this.cssScene = new THREE.Scene();
-    //CX this.rayCaster = new THREE.Raycaster();
-    // this.mouse = new THREE.Vector2();
     this.objectSelector = new ObjectSelector();
     this.screenWidth = window.innerWidth;
     this.screenHeight = window.innerHeight;
@@ -28,13 +26,9 @@ class Construct {
     this.initLight();
     this.initFloor();
     this.initEditor();
-    // temporary
-    //this.createScreen();
 
     $container.append(this.cssRenderer.domElement);
     this.cssRenderer.domElement.appendChild(this.glRenderer.domElement);
-    //$container.append(this.glRenderer.domElement);
-
   }
 
   initEditor() {
@@ -67,11 +61,11 @@ class Construct {
       try {
         var initializeProgram = eval(program.initialize);
 
-        var renderedObjects = initializeProgram(self.scene, program);
+        var programRenderedObjects = initializeProgram(self.scene, program);
 
-        renderedObjects.updateProgram = eval(program.update);
+        programRenderedObjects.updateProgram = eval(program.update);
 
-        self.renderedObjects[program._id] = renderedObjects;
+        self.renderedObjects[program._id] = programRenderedObjects;
       } catch (error) {
         var errorString = JSON.stringify(error);
         console.warn(
@@ -186,21 +180,12 @@ class Construct {
     } else {
       console.error('no pointerlock');
     }
-
-    // // raycaster related
-    // function onMouseMove() {
-    //   self.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    //   self.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    // }
-    // window.addEventListener('mousemove', onMouseMove, false);
   }
 
   initCamera() {
     var [VIEW_ANGLE, ASPECT] = [45, this.screenWidth / this.screenHeight];
     var [NEAR, FAR] = [.1, 20000];
     this.camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
-
-    // this.camera.lookAt(this.scene.position);
   }
 
   initGLRenderer() {
@@ -254,11 +239,6 @@ class Construct {
   render() {
     if (!this.controls.enabled) {
       this.objectSelector.selectObjects(this.scene, this.camera);
-      // this.rayCaster.setFromCamera(this.mouse, this.camera);
-      // var intersects = this.rayCaster.intersectObjects(this.scene.children);
-      // for (var i = 0; i < intersects.length; i++) {
-      //   intersects[i].object.material.color.set( 0xff0000 );
-      // }
     }
     this.glRenderer.render(this.scene, this.camera);
     this.cssRenderer.render(this.cssScene, this.camera);
@@ -306,10 +286,7 @@ class Construct {
   }
 }
 
-
-
 Template.hello.onRendered(() => {
-
   var $container = this.$('.world');
 
   Tracker.autorun((computation) => {
