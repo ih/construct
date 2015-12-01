@@ -33,19 +33,24 @@ class Construct {
 
   initEditor() {
     var self = this;
-    self.editor = AceEditor.instance('editor', {
+    AceEditor.instance('editor', {
       theme: 'dawn',
       mode: 'javascript'
     }, (editor) => {
-      editor.insert('hallo world');
+      self.editor = editor;
     });
     $('#editor').hide();
 
     self.comp = Tracker.autorun(() => {
       console.log('object selection changed!');
-      if (self.objectSelector.selectedObject.get()) {
+      if (self.objectSelector.selectedObject.get() && self.editor) {
         var selectedProgramId = self.objectSelector.selectedObject.get().object.programId;
-        console.log('new program id ' + selectedProgramId);
+        var selectedProgram = Programs.findOne(selectedProgramId);
+        self.editor.insert(selectedProgram.initialize);
+        self.editor.insert(selectedProgram.update);
+        console.log('program ' + selectedProgram);
+      } else if (self.editor) {
+        self.editor.setValue('');
       }
     }, () => {console.log('problem in the autorun'); });
   }
