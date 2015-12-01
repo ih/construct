@@ -25,3 +25,4 @@ irvin:utility
 irvin:editor
 arch:ace-editor
 irvin:object-selector
+reactive-var

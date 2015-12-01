@@ -8,7 +8,7 @@ class Construct {
     console.log('initializing the construct');
     this.scene = new THREE.Scene();
     this.cssScene = new THREE.Scene();
-    this.objectSelector = new ObjectSelector();
+    this.objectSelector = new ObjectSelector('#editor');
     this.screenWidth = window.innerWidth;
     this.screenHeight = window.innerHeight;
     this.renderedObjects = {};
@@ -32,6 +32,7 @@ class Construct {
   }
 
   initEditor() {
+    var self = this;
     self.editor = AceEditor.instance('editor', {
       theme: 'dawn',
       mode: 'javascript'
@@ -39,11 +40,20 @@ class Construct {
       editor.insert('hallo world');
     });
     $('#editor').hide();
+
+    self.comp = Tracker.autorun(() => {
+      console.log('object selection changed!');
+      if (self.objectSelector.selectedObject.get()) {
+        var selectedProgramId = self.objectSelector.selectedObject.get().object.programId;
+        console.log('new program id ' + selectedProgramId);
+      }
+    }, () => {console.log('problem in the autorun'); });
   }
 
   toggleEditor() {
     if (this.editorActive) {
       $('#editor').hide();
+      this.objectSelector.unselectAll();
       this.editorActive = false;
     } else {
       $('#editor').show();
@@ -237,7 +247,7 @@ class Construct {
   }
 
   render() {
-    if (!this.controls.enabled) {
+    if (!this.controls.enabled && this.editorActive) {
       this.objectSelector.selectObjects(this.scene, this.camera);
     }
     this.glRenderer.render(this.scene, this.camera);
@@ -289,18 +299,23 @@ class Construct {
 Template.hello.onRendered(() => {
   var $container = this.$('.world');
 
-  Tracker.autorun((computation) => {
+  var userLoadedComputation = Tracker.autorun((computation) => {
     var user = Meteor.user();
     var userProgram = Programs.findOne({type: 'user', userId: Meteor.userId()});
     if (user && userProgram) {
       computation.stop();
-      var construct = new Construct($container, user);
-      function animate() {
-        requestAnimationFrame(animate);
-        construct.render();
-        construct.update();
-      }
-      animate();
     }
+  });
+  userLoadedComputation.onStop(() => {
+    // do this here instead of inside the autorun b/c if it was in the autorun
+    // stopping that computation stops any nested computations
+    var construct = new Construct($container, Meteor.user());
+
+    function animate() {
+      requestAnimationFrame(animate);
+      construct.render();
+      construct.update();
+    }
+    animate();
   });
 });
