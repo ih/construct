@@ -12,7 +12,6 @@ class Construct {
     this.screenWidth = window.innerWidth;
     this.screenHeight = window.innerHeight;
     this.renderedObjects = {};
-    this.editorActive = false;
     // set by initPrograms
     this.userProgram = null;
 
@@ -32,38 +31,22 @@ class Construct {
   }
 
   initEditor() {
+    // this.editor = new Editor();
     var self = this;
-    AceEditor.instance('editor', {
-      theme: 'dawn',
-      mode: 'javascript'
-    }, (editor) => {
-      self.editor = editor;
-    });
-    $('#editor').hide();
+    self.editor = new Editor('#editor');
 
     self.comp = Tracker.autorun(() => {
       console.log('object selection changed!');
-      if (self.objectSelector.selectedObject.get() && self.editor) {
+      if (self.objectSelector.selectedObject.get() && self.editor.isLoaded) {
         var selectedProgramId = self.objectSelector.selectedObject.get().object.programId;
         var selectedProgram = Programs.findOne(selectedProgramId);
         self.editor.insert(selectedProgram.initialize);
         self.editor.insert(selectedProgram.update);
         console.log('program ' + selectedProgram);
-      } else if (self.editor) {
+      } else if (self.editor.isLoaded) {
         self.editor.setValue('');
       }
     }, () => {console.log('problem in the autorun'); });
-  }
-
-  toggleEditor() {
-    if (this.editorActive) {
-      $('#editor').hide();
-      this.objectSelector.unselectAll();
-      this.editorActive = false;
-    } else {
-      $('#editor').show();
-      this.editorActive = true;
-    }
   }
 
   initPrograms() {
@@ -119,9 +102,12 @@ class Construct {
 
     var onKeyDown = (event) => {
       if (event.keyCode === 69) {
-        self.toggleEditor();
+        self.editor.toggle();
+        if (!self.editor.isActive) {
+          self.objectSelector.unselectAll();
+        }
         return;
-      } else if (self.editorActive) {
+      } else if (self.editor.isActive) {
         return;
       }
 
@@ -145,7 +131,7 @@ class Construct {
         self.moveRight = true;
         break;
       case 69: // e
-        this.toggleEditor();
+        self.editor.toggle();
         break;
       }
     };
@@ -252,7 +238,7 @@ class Construct {
   }
 
   render() {
-    if (!this.controls.enabled && this.editorActive) {
+    if (!this.controls.enabled && this.editor.isActive) {
       this.objectSelector.selectObjects(this.scene, this.camera);
     }
     this.glRenderer.render(this.scene, this.camera);
