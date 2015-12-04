@@ -59,7 +59,12 @@ class Construct {
       try {
         var initializeProgram = eval(program.initialize);
 
-        var programRenderedObjects = initializeProgram(self.scene, program);
+        var programRenderedObjects = initializeProgram(program);
+
+        _.each(programRenderedObjects, (renderedObject) => {
+          renderedObject.programId = program._id;
+          self.scene.add(renderedObject);
+        });
 
         programRenderedObjects.updateProgram = eval(program.update);
 

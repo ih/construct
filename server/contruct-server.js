@@ -27,14 +27,13 @@ Meteor.startup(function () {
       },
       initialize:
       `
-      (scene, self) => {
+      (self) => {
         var geometry = new THREE.CubeGeometry(100, 100, 100);
         var material = new THREE.MeshBasicMaterial({color: '#00ff00'});
         var position = self.position;
         var cube = new THREE.Mesh(geometry, material);
         cube.position.set(position.x, position.y, position.z);
-        cube.programId = self._id;
-        scene.add(cube);
+        cube.direction = 1;
         return {cube: cube};
       }
       `,
@@ -42,7 +41,12 @@ Meteor.startup(function () {
       `
       (renderedObjects) => {
         var cube = renderedObjects['cube'];
-        //cube.position.x += 0.0;
+        if (cube.position.x > 100) {
+          cube.direction = -1;
+        } else if (cube.position.x < -100){
+          cube.direction = 1;
+        }
+        cube.position.x += cube.direction;
       }
       `
     });
@@ -70,15 +74,12 @@ Accounts.onCreateUser(function(options, user) {
     color: Utility.randomColor(),
     initialize:
     `
-    (scene, self) => {
+    (self) => {
       var geometry = new THREE.CubeGeometry(10, 10, 10);
       var material = new THREE.MeshBasicMaterial({color: self.color});
       var position = self.position;
       var cube = new THREE.Mesh(geometry, material);
       cube.position.set(position.x, position.y, position.z);
-      // move this and scene to the construct
-      cube.programId = self._id;
-      scene.add(cube);
       return {user: cube};
       }
     `,
