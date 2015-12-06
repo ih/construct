@@ -157,7 +157,7 @@ class Construct {
       this.controls = new THREE.PointerLockControls(this.camera);
       this.scene.add(this.controls.getObject());
       this.controls.getObject().position.copy(this.userProgram.position);
-      var element = $('.enablePointer')[0];
+      var element = $('.enable-pointer')[0];
 
       var self = this;
       function pointerlockchange(event) {

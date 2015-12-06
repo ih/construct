@@ -6,7 +6,7 @@ Editor = class Editor {
     self.isActive = false;
     self.editorSelector = editorSelector;
     self.isLoaded = false;
-    AceEditor.instance('editor', {
+    AceEditor.instance('ace-editor', {
       theme: 'dawn',
       mode: 'javascript'
     }, (editor) => {
@@ -36,3 +36,9 @@ Editor = class Editor {
   }
 
 };
+
+Template.editor.events({
+  'click .initialization-code': (event) => {
+    console.log('click click');
+  }
+});
