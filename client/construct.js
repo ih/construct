@@ -40,9 +40,7 @@ class Construct {
       if (self.objectSelector.selectedObject.get() && self.editor.isLoaded) {
         var selectedProgramId = self.objectSelector.selectedObject.get().object.programId;
         var selectedProgram = Programs.findOne(selectedProgramId);
-        self.editor.insert(selectedProgram.initialize);
-        self.editor.insert(selectedProgram.update);
-        console.log('program ' + selectedProgram);
+        self.editor.loadProgram(selectedProgram);
       } else if (self.editor.isLoaded) {
         self.editor.setValue('');
       }

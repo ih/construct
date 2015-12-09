@@ -6,6 +6,8 @@ Editor = class Editor {
     self.isActive = false;
     self.editorSelector = editorSelector;
     self.isLoaded = false;
+    self.program = null;
+
     AceEditor.instance('ace-editor', {
       theme: 'dawn',
       mode: 'javascript'
@@ -15,6 +17,18 @@ Editor = class Editor {
     });
     $(this.editorSelector).hide();
 
+    self.initializeEvents();
+
+  }
+
+  initializeEvents() {
+    var self = this;
+    $('.initialization-code')[0].addEventListener('click', (event) => {
+      self.showInitializationCode();
+    });
+    $('.update-code')[0].addEventListener('click', (event) => {
+      self.showUpdateCode();
+    });
   }
 
   toggle() {
@@ -35,10 +49,18 @@ Editor = class Editor {
     this.editor.setValue(text);
   }
 
-};
-
-Template.editor.events({
-  'click .initialization-code': (event) => {
-    console.log('click click');
+  loadProgram(program) {
+    console.log('loading program into editor:' + JSON.stringify(program));
+    this.program = program;
+    this.showInitializationCode();
   }
-});
+
+  showInitializationCode() {
+    this.setValue(this.program.initialize);
+  }
+
+  showUpdateCode() {
+    this.setValue(this.program.update);
+  }
+
+};
