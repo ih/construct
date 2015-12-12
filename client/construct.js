@@ -35,16 +35,48 @@ class Construct {
     var self = this;
     self.editor = new Editor('#editor');
 
-    self.comp = Tracker.autorun(() => {
+
+    // if an object is selected load its code into the editor
+    Tracker.autorun(() => {
       console.log('object selection changed!');
       if (self.objectSelector.selectedObject.get() && self.editor.isLoaded) {
         var selectedProgramId = self.objectSelector.selectedObject.get().object.programId;
-        var selectedProgram = Programs.findOne(selectedProgramId);
-        self.editor.loadProgram(selectedProgram);
+        var selectedProgram = Tracker.nonreactive(() => {
+          return Programs.findOne(selectedProgramId);
+        });
+        Tracker.nonreactive(() => {
+          self.editor.loadProgram(selectedProgram);
+        });
       } else if (self.editor.isLoaded) {
         self.editor.setValue('');
       }
     }, () => {console.log('problem in the autorun'); });
+
+    // if init code is edited update the program object
+    Tracker.autorun(() => {
+      console.log('updating the init function');
+      var initializeFunction = self.editor.initializeFunction.get();
+      if (initializeFunction) {
+        try {
+          var changedProgramId = self.editor.programId;
+          eval(initializeFunction);
+          Programs.update({_id: self.editor.programId}, {$set: {
+            initialize: initializeFunction
+          }});
+          self.removeRenderedObjects(changedProgramId);
+          self.initProgram(changedProgramId);
+        } catch (error) {
+          console.log('problem evaluating change, not saving');
+        }
+      }
+    });
+  }
+
+  removeRenderedObjects(programId) {
+    var self = this;
+    _.each(self.renderedObjects[programId], (renderedObject) => {
+      self.scene.remove(renderedObject);
+    });
   }
 
   initPrograms() {
@@ -54,25 +86,31 @@ class Construct {
           program.userId === Meteor.userId()) {
         self.userProgram = program;
       }
-      try {
-        var initializeProgram = eval(program.initialize);
-
-        var programRenderedObjects = initializeProgram(program);
-
-        _.each(programRenderedObjects, (renderedObject) => {
-          renderedObject.programId = program._id;
-          self.scene.add(renderedObject);
-        });
-
-        programRenderedObjects.updateProgram = eval(program.update);
-
-        self.renderedObjects[program._id] = programRenderedObjects;
-      } catch (error) {
-        var errorString = JSON.stringify(error);
-        console.warn(
-          `Problem initializing program ${program._id}: ${errorString}`);
-      }
+      self.initProgram(program._id);
     });
+  }
+
+  initProgram(programId) {
+    var self = this;
+    var program = Programs.findOne({_id: programId});
+    try {
+      var initializeProgram = eval(program.initialize);
+
+      var programRenderedObjects = initializeProgram(program);
+
+      _.each(programRenderedObjects, (renderedObject) => {
+        renderedObject.programId = program._id;
+        self.scene.add(renderedObject);
+      });
+
+      programRenderedObjects.updateProgram = eval(program.update);
+
+      self.renderedObjects[program._id] = programRenderedObjects;
+    } catch (error) {
+      var errorString = JSON.stringify(error);
+      console.warn(
+        `Problem initializing program ${program._id}: ${errorString}`);
+    }
   }
 
   initKeyboard() {
