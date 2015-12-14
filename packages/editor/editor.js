@@ -1,19 +1,18 @@
 // based on http://adndevblog.typepad.com/cloud_and_mobile/2015/07/embedding-webpages-in-a-3d-threejs-scene.html
 
-var INITIALIZE = 0;
-var UPDATE = 1;
-
 Editor = class Editor {
   constructor(editorSelector) {
 
     var self = this;
+    self.INITIALIZE = 0;
+    self.UPDATE = 1;
     self.isActive = false;
     self.editorSelector = editorSelector;
     self.isLoaded = false;
     self.programId = null;
     self.initializeFunction = new ReactiveVar(null);
     self.updateFunction = new ReactiveVar(null);
-    self.currentFunction = INITIALIZE;
+    self.currentFunction = self.INITIALIZE;
 
     AceEditor.instance('ace-editor', {
       theme: 'dawn',
@@ -38,10 +37,10 @@ Editor = class Editor {
       if (!self.programId) {
         return;
       }
-      if (self.currentFunction === INITIALIZE) {
+      if (self.currentFunction === self.INITIALIZE) {
         console.log('inside the change handler ' + self.programId);
         self.initializeFunction.set(self.editor.getSession().getValue());
-      } else if (self.currentFunction === UPDATE) {
+      } else if (self.currentFunction === self.UPDATE) {
         self.updateFunction.set(self.editor.getSession().getValue());
       }
     });
@@ -75,14 +74,14 @@ Editor = class Editor {
 
   showInitializationCode() {
     console.log('showing init code ' + this);
+    this.currentFunction = this.INITIALIZE;
     var code = this.initializeFunction.get();
-    this.setValue(code, -1);
-    this.currentFunction = INITIALIZE;
+    Tracker.nonreactive(() => {this.setValue(code, -1);});
   }
 
   showUpdateCode() {
-    this.setValue(this.updateFunction.get(), -1);
-    this.currentFunction = UPDATE;
+    this.currentFunction = this.UPDATE;
+    Tracker.nonreactive(() => {this.setValue(this.updateFunction.get(), -1);});
   }
 
 };

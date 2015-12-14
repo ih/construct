@@ -55,18 +55,20 @@ class Construct {
     // if init code is edited update the program object
     Tracker.autorun(() => {
       console.log('updating the init function');
-      var initializeFunction = self.editor.initializeFunction.get();
-      if (initializeFunction) {
-        try {
-          var changedProgramId = self.editor.programId;
-          eval(initializeFunction);
-          Programs.update({_id: self.editor.programId}, {$set: {
-            initialize: initializeFunction
-          }});
-          self.removeRenderedObjects(changedProgramId);
-          self.initProgram(changedProgramId);
-        } catch (error) {
-          console.log('problem evaluating change, not saving');
+      if (self.editor.currentFunction === self.editor.INITIALIZE) {
+        var initializeFunction = self.editor.initializeFunction.get();
+        if (initializeFunction) {
+          try {
+            var changedProgramId = self.editor.programId;
+            eval(initializeFunction);
+            Programs.update({_id: self.editor.programId}, {$set: {
+              initialize: initializeFunction
+            }});
+            self.removeRenderedObjects(changedProgramId);
+            self.initProgram(changedProgramId);
+          } catch (error) {
+            console.log('problem evaluating change, not saving');
+          }
         }
       }
     });
