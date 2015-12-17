@@ -84,4 +84,12 @@ Editor = class Editor {
     Tracker.nonreactive(() => {this.setValue(this.updateFunction.get(), -1);});
   }
 
+  clear() {
+    this.setValue('');
+    this.programId = null;
+    this.initializeFunction.set(null);
+    this.updateFunction.set(null);
+    this.currentFunction = self.INITIALIZE;
+  }
+
 };

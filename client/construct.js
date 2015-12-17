@@ -48,15 +48,17 @@ class Construct {
           self.editor.loadProgram(selectedProgram);
         });
       } else if (self.editor.isLoaded) {
-        self.editor.setValue('');
+        self.editor.clear();
       }
     }, () => {console.log('problem in the autorun'); });
 
     // if init code is edited update the program object
     Tracker.autorun(() => {
       console.log('updating the init function');
+      var initializeFunction = self.editor.initializeFunction.get();
+      var updateFunction = self.editor.updateFunction.get();
       if (self.editor.currentFunction === self.editor.INITIALIZE) {
-        var initializeFunction = self.editor.initializeFunction.get();
+
         if (initializeFunction) {
           try {
             var changedProgramId = self.editor.programId;
@@ -66,6 +68,19 @@ class Construct {
             }});
             self.removeRenderedObjects(changedProgramId);
             self.initProgram(changedProgramId);
+          } catch (error) {
+            console.log('problem evaluating change, not saving');
+          }
+        }
+      } else {
+
+        if (updateFunction) {
+          try {
+            var changedProgramId = self.editor.programId;
+            eval(updateFunction);
+            Programs.update({_id: self.editor.programId}, {$set: {
+              update: updateFunction
+            }});
           } catch (error) {
             console.log('problem evaluating change, not saving');
           }
@@ -144,10 +159,11 @@ class Construct {
     };
 
     var onKeyDown = (event) => {
-      if (event.keyCode === 69) {
+      if (event.keyCode === 69 && !self.editor.programId) {
         self.editor.toggle();
         if (!self.editor.isActive) {
           self.objectSelector.unselectAll();
+
         }
         return;
       } else if (self.editor.isActive) {
@@ -320,7 +336,10 @@ class Construct {
       // this doesn't need to happen each update
       try {
         var updateProgram = self.renderedObjects[program._id].updateProgram;
-        updateProgram(self.renderedObjects[program._id], program);
+        var updatedProgram = updateProgram(self.renderedObjects[program._id], program);
+        if (updatedProgram) {
+          Programs.update({_id: this.updatedProgram._id}, updatedProgram);
+        }
       } catch (error) {
         var errorString = JSON.stringify(error);
         console.log(
