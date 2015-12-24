@@ -13,7 +13,7 @@ class Construct {
     this.screenHeight = window.innerHeight;
     this.renderedObjects = {};
     // set by initPrograms
-    this.userProgram = null;
+    this.userProgramId = null;
 
     this.initPrograms(user);
     this.initKeyboard();
@@ -101,7 +101,7 @@ class Construct {
     Programs.find().forEach((program) => {
       if (program.type && program.type === 'user' &&
           program.userId === Meteor.userId()) {
-        self.userProgram = program;
+        self.userProgramId = program._id;
       }
       self.initProgram(program._id);
     });
@@ -171,6 +171,9 @@ class Construct {
       }
 
       switch ( event.keyCode ) {
+      case 66:
+        self.createNewProgram();
+        break;
       case 38: // up
       case 87: // w
         self.moveForward = true;
@@ -210,7 +213,8 @@ class Construct {
     if (havePointerLock) {
       this.controls = new THREE.PointerLockControls(this.camera);
       this.scene.add(this.controls.getObject());
-      this.controls.getObject().position.copy(this.userProgram.position);
+      this.controls.getObject().position.copy(
+        Programs.findOne(this.userProgramId).position);
       var element = $('.enable-pointer')[0];
 
       var self = this;
@@ -325,7 +329,7 @@ class Construct {
 
     if (this.moveForward || this.moveBackward || this.moveLeft ||
         this.moveRight) {
-      Programs.update({_id: this.userProgram._id}, {$set: {
+      Programs.update({_id: this.userProgramId}, {$set: {
         position: this.controls.getObject().position}});
     }
   }
@@ -346,6 +350,35 @@ class Construct {
           `Problem updating program ${program._id}: ${errorString}`);
       }
     });
+  }
+
+  createNewProgram() {
+    var newProgramPosition = Programs.findOne(this.userProgramId).position;
+    var newProgramId = Programs.insert({
+      position: {
+        x: newProgramPosition.x,
+        y: newProgramPosition.y,
+        z: newProgramPosition.z
+      },
+      initialize:
+      `
+      (self) => {
+        var geometry = new THREE.CubeGeometry(10, 10, 10);
+        var material = new THREE.MeshBasicMaterial({color: '#00FF00'});
+        var position = self.position;
+        var cube = new THREE.Mesh(geometry, material);
+        cube.position.set(position.x, position.y, position.z);
+        return {placeholder: cube};
+      }
+      `,
+      update:
+      `
+      (renderedObjects, self) => {
+        var cube = renderedObjects['placeholder'];
+      }
+      `
+    });
+    this.initProgram(newProgramId);
   }
 }
 
