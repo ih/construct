@@ -10,7 +10,7 @@ ObjectSelector = class ObjectSelector {
       } else if (!oldValue || !newValue) {
         return false;
       } else {
-        return oldValue.object.programId === newValue.object.programId;
+        return oldValue.programId === newValue.programId;
       }
     });
     this.selectedObjectOpacity = null;
@@ -29,12 +29,7 @@ ObjectSelector = class ObjectSelector {
         return;
       }
       if (self.intersectedObject) {
-        if (self.selectedObject.get() &&
-            self.selectedObject.get().object !== self.intersectedObject.object) {
-          self.unhighlightSelectedObject();
-        }
-        self.selectedObject.set(self.intersectedObject);
-        self.highlightSelectedObject();
+        self.selectObject(self.intersectedObject);
       } else {
         if (self.selectedObject.get()) {
           self.unhighlightSelectedObject();
@@ -43,7 +38,16 @@ ObjectSelector = class ObjectSelector {
       }
     }
 
-    window.addEventListener('click', onClick, false);
+    window.addEventListener('click', onClick, true);
+  }
+
+  selectObject(renderedObject) {
+    if (self.selectedObject.get() &&
+        self.selectedObject.get() !== renderedObject) {
+      self.unhighlightSelectedObject();
+    }
+    self.selectedObject.set(renderedObject);
+    self.highlightSelectedObject();
   }
 
   selectObjects(scene, camera) {
@@ -56,20 +60,20 @@ ObjectSelector = class ObjectSelector {
 
     // mouse is on a new object so return the old object to its previous state
     // and highlight the new object
-    if (intersects.length > 0 && this.intersectedObject !== intersects[0]) {
+    if (intersects.length > 0 && this.intersectedObject !== intersects[0].object) {
       if (this.intersectedObject &&
           (!this.selectedObject.get() ||
-           this.intersectedObject.object !== this.selectedObject.get().object)) {
+           this.intersectedObject !== this.selectedObject.get())) {
         this.unhighlightIntersectedObject();
       }
-      this.intersectedObject = intersects[0];
+      this.intersectedObject = intersects[0].object;
       if (!this.selectedObject.get() ||
-          this.intersectedObject.object !== this.selectedObject.get().object) {
+          this.intersectedObject !== this.selectedObject.get()) {
         this.highlightIntersectedObject();
       }
     } else if (intersects.length === 0 && this.intersectedObject) {
       if (!this.selectedObject.get() ||
-          this.intersectedObject.object !== this.selectedObject.get().object) {
+          this.intersectedObject !== this.selectedObject.get()) {
         this.unhighlightIntersectedObject();
       }
       this.intersectedObject = null;
@@ -81,7 +85,7 @@ ObjectSelector = class ObjectSelector {
     if (!this.intersectedObject) {
       return;
     }
-    this.intersectedObject.object.material.opacity =
+    this.intersectedObject.material.opacity =
       this.intersectedObjectOpacity;
   }
 
@@ -89,20 +93,20 @@ ObjectSelector = class ObjectSelector {
     if (!this.selectedObject.get()) {
       return;
     }
-    this.selectedObject.get().object.material.opacity = this.selectedObjectOpacity;
+    this.selectedObject.get().material.opacity = this.selectedObjectOpacity;
   }
 
 
   highlightIntersectedObject() {
     this.intersectedObjectOpacity =
-      this.intersectedObject.object.material.opacity;
-    this.intersectedObject.object.material.opacity =
+      this.intersectedObject.material.opacity;
+    this.intersectedObject.material.opacity =
       this.intersectedObjectOpacity / 2;
   }
 
   // eventually make this add a border to the object
   highlightSelectedObject() {
-    if (this.selectedObject.get().object !== this.intersectedObject.object) {
+    if (this.selectedObject.get() !== this.intersectedObject) {
       console.error('selected object is not highlighted???');
     } else {
       this.selectedObjectOpacity = this.intersectedObjectOpacity;

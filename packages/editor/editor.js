@@ -13,6 +13,7 @@ Editor = class Editor {
     self.initializeFunction = new ReactiveVar(null);
     self.updateFunction = new ReactiveVar(null);
     self.currentFunction = self.INITIALIZE;
+    self.programSelectorSelector = '.program-selector';
 
     AceEditor.instance('ace-editor', {
       theme: 'dawn',
@@ -70,6 +71,7 @@ Editor = class Editor {
     this.initializeFunction.set(program.initialize);
     this.updateFunction.set(program.update);
     this.showInitializationCode();
+    $(this.programSelectorSelector).val(program._id);
   }
 
   showInitializationCode() {
@@ -90,6 +92,13 @@ Editor = class Editor {
     this.initializeFunction.set(null);
     this.updateFunction.set(null);
     this.currentFunction = self.INITIALIZE;
+  }
+
+  updateProgramSelector(programsCursor) {
+    programsCursor.forEach((program) => {
+      $(this.programSelectorSelector)
+        .append($('<option>', {value: program._id, text: program._id}));
+    });
   }
 
 };

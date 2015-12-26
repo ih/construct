@@ -40,7 +40,7 @@ class Construct {
     Tracker.autorun(() => {
       console.log('object selection changed!');
       if (self.objectSelector.selectedObject.get() && self.editor.isLoaded) {
-        var selectedProgramId = self.objectSelector.selectedObject.get().object.programId;
+        var selectedProgramId = self.objectSelector.selectedObject.get().programId;
         var selectedProgram = Tracker.nonreactive(() => {
           return Programs.findOne(selectedProgramId);
         });
@@ -51,6 +51,12 @@ class Construct {
         self.editor.clear();
       }
     }, () => {console.log('problem in the autorun'); });
+
+    // keep the selection menu updated
+    Tracker.autorun(() => {
+      var allProgramsCursor = Programs.find({}, {fields: {_id: 1}});
+      self.editor.updateProgramSelector(allProgramsCursor);
+    });
 
     // if init code is edited update the program object
     Tracker.autorun(() => {
@@ -87,6 +93,24 @@ class Construct {
         }
       }
     });
+
+    // initialize program selector
+    $(self.editor.programSelectorSelector).change((event) => {
+      console.log(event);
+      var selectedValue = $(self.editor.programSelectorSelector).val();
+      var selectedProgramObject = _.values(_.omit(
+        self.renderedObjects[selectedValue], 'updateProgram'))[0];
+      console.log('the value selected');
+      console.log(this.value);
+      if (selectedProgramObject) {
+        // use the object selector which will trigger the program to load
+        self.objectSelector.selectObject(selectedProgramObject);
+      } else {
+        console.warn('no program found?!');
+      }
+    });
+
+
   }
 
   removeRenderedObjects(programId) {
@@ -363,18 +387,18 @@ class Construct {
       initialize:
       `
       (self) => {
-        var geometry = new THREE.CubeGeometry(10, 10, 10);
-        var material = new THREE.MeshBasicMaterial({color: '#00FF00'});
+        var geometry = new THREE.SphereGeometry(4, 10, 10);
+        var material = new THREE.MeshBasicMaterial({color: '#00FF00', wireframe: true});
         var position = self.position;
-        var cube = new THREE.Mesh(geometry, material);
-        cube.position.set(position.x, position.y, position.z);
-        return {placeholder: cube};
+        var sphere = new THREE.Mesh(geometry, material);
+        sphere.position.set(position.x, position.y, position.z);
+        return {placeholder: sphere};
       }
       `,
       update:
       `
       (renderedObjects, self) => {
-        var cube = renderedObjects['placeholder'];
+        var sphere = renderedObjects['placeholder'];
       }
       `
     });
