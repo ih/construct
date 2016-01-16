@@ -22,8 +22,6 @@ class Construct {
     this.initGLRenderer();
     this.initCSSRenderer();
     this.initEvents();
-    this.initLight();
-    this.initFloor();
     this.initEditor();
 
     $container.append(this.cssRenderer.domElement);
@@ -300,28 +298,6 @@ class Construct {
     THREEx.WindowResize(this.cssRenderer, this.camera);
     THREEx.WindowResize(this.glRenderer, this.camera);
     THREEx.FullScreen.bindKey({charCode: 'm'.charCodeAt(0)});
-  }
-
-  initLight() {
-    this.light = new THREE.PointLight(0xffffff);
-    this.light.position.set(0, 250, 0);
-    this.scene.add(this.light);
-  }
-
-  initFloor() {
-    var floorTexture = new THREE.ImageUtils.loadTexture(
-      '/checkerboard.jpg');
-    floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
-    floorTexture.repeat.set( 10, 10 );
-    var floorMaterial = new THREE.MeshBasicMaterial({
-      map: floorTexture,
-      side: THREE.DoubleSide
-    });
-    var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 10, 10);
-    this.floor = new THREE.Mesh(floorGeometry, floorMaterial);
-    this.floor.position.y = -0.5;
-    this.floor.rotation.x = Math.PI / 2;
-    this.scene.add(this.floor);
   }
 
   render() {
