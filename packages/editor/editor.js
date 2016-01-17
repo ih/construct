@@ -1,5 +1,8 @@
 // based on http://adndevblog.typepad.com/cloud_and_mobile/2015/07/embedding-webpages-in-a-3d-threejs-scene.html
-
+// the editor doesn't actually change programs, but has reactive variables that
+// correspond to editable parts of a program then whatever is using the editor
+// (e.g. the main construct file) responds to changes and does the actual update
+// of the program
 Editor = class Editor {
   constructor(editorSelector) {
 
@@ -12,8 +15,10 @@ Editor = class Editor {
     self.programId = null;
     self.initializeFunction = new ReactiveVar(null);
     self.updateFunction = new ReactiveVar(null);
+    self.programName = new ReactiveVar(null);
     self.currentFunction = self.INITIALIZE;
     self.programSelectorSelector = '.program-selector';
+    self.programNameSelector = '.program-name-field';
 
     AceEditor.instance('ace-editor', {
       theme: 'dawn',
@@ -33,6 +38,10 @@ Editor = class Editor {
     });
     $('.update-code')[0].addEventListener('click', () => {
       self.showUpdateCode();
+    });
+    $(self.programNameSelector)[0].addEventListener('change', (event) => {
+      var newName = $(event.currentTarget).val();
+      self.programName.set(newName);
     });
     this.editor.getSession().on('change', () => {
       if (!self.programId) {
@@ -72,6 +81,7 @@ Editor = class Editor {
     this.updateFunction.set(program.update);
     this.showInitializationCode();
     $(this.programSelectorSelector).val(program._id);
+    $(this.programNameSelector).val(program.name || program._id);
   }
 
   showInitializationCode() {
@@ -89,15 +99,23 @@ Editor = class Editor {
   clear() {
     this.setValue('');
     this.programId = null;
+    this.programName.set(null);
     this.initializeFunction.set(null);
     this.updateFunction.set(null);
     this.currentFunction = self.INITIALIZE;
   }
 
   updateProgramSelector(programsCursor) {
+    var self = this;
+    $(this.programSelectorSelector).find('option').remove();
     programsCursor.forEach((program) => {
+      console.log('program name ' + program.name);
       $(this.programSelectorSelector)
-        .append($('<option>', {value: program._id, text: program._id}));
+        .append($('<option>', {
+          value: program._id,
+          text: program.name || program._id,
+          selected: program._id === self.programId
+        }));
     });
   }
 

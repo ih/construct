@@ -52,10 +52,23 @@ class Construct {
 
     // keep the selection menu updated
     Tracker.autorun(() => {
-      var allProgramsCursor = Programs.find({}, {fields: {_id: 1}});
+      var allProgramsCursor = Programs.find({}, {fields: {_id: 1, name: 1}});
       self.editor.updateProgramSelector(allProgramsCursor);
     });
 
+    // if program name is edited update the program object
+    Tracker.autorun(() => {
+      var programName = self.editor.programName.get();
+      console.log('updating the program name');
+      if (!self.editor.programId) {
+        console.log('need to select a program before changing the name');
+        return null;
+      }
+      Programs.update({_id: self.editor.programId}, {$set: {
+        name: programName
+      }});
+      return true;
+    });
     // if init code is edited update the program object
     Tracker.autorun(() => {
       console.log('updating the init function');
