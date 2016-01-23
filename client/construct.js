@@ -133,12 +133,23 @@ class Construct {
 
   initPrograms() {
     var self = this;
-    Programs.find().forEach((program) => {
-      if (program.type && program.type === 'user' &&
-          program.userId === Meteor.userId()) {
-        self.userProgramId = program._id;
+
+    // observe to load any new programs that get created by other users
+    Programs.find().observe({
+      added: (program) => {
+        if (program.type && program.type === 'user' &&
+            program.userId === Meteor.userId()) {
+          self.userProgramId = program._id;
+        }
+        self.initProgram(program._id);
+      },
+      changed: (updatedProgram, originalProgram) => {
+        if (updatedProgram.initialize !== originalProgram.initialize ||
+            updatedProgram.update !== originalProgram.update) {
+          self.removeRenderedObjects(updatedProgram._id);
+          self.initProgram(updatedProgram._id);
+        }
       }
-      self.initProgram(program._id);
     });
   }
 
