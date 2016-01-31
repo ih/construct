@@ -74,11 +74,11 @@ class Construct {
     });
     // if init code is edited update the program object
     Tracker.autorun(() => {
-      console.log('updating the init function');
+
       var initializeFunction = self.editor.initializeFunction.get();
       var updateFunction = self.editor.updateFunction.get();
       if (self.editor.currentFunction === self.editor.INITIALIZE) {
-
+        console.log('updating the init function');
         if (initializeFunction) {
           try {
             var changedProgramId = self.editor.programId;

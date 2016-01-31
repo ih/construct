@@ -118,7 +118,11 @@ Editor = class Editor {
   }
 
   clear() {
+    // change visible parts of the editor
     this.setValue('');
+    $(this.programNameSelector).val(null);
+    $(this.programSelectorSelector).val(null);
+
     this.programId = null;
     this.programName.set(null);
     this.initializeFunction.set(null);
@@ -129,6 +133,12 @@ Editor = class Editor {
   updateProgramSelector(programsCursor) {
     var self = this;
     $(this.programSelectorSelector).find('option').remove();
+    // add a none option
+    $(this.programSelectorSelector).append($('<option>', {
+      value: null,
+      text: 'None',
+      selected: !self.programId
+    }));
     programsCursor.forEach((program) => {
       console.log('program name ' + program.name);
       $(this.programSelectorSelector)
