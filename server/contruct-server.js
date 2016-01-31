@@ -1,5 +1,6 @@
 var Programs = new Mongo.Collection('programs');
 
+
 Programs.allow({
   insert: function (userId, doc) {
     return true;
@@ -39,7 +40,7 @@ Meteor.startup(function () {
       `,
       update:
       `
-      (renderedObjects) => {
+      (renderedObjects, self) => {
         var cube = renderedObjects['cube'];
         if (cube.position.x > 100) {
           cube.direction = -1;
@@ -47,6 +48,8 @@ Meteor.startup(function () {
           cube.direction = 1;
         }
         cube.position.x += cube.direction;
+        self.position.x += cube.direction;
+        return {position: self.position};
       }
       `
     });
@@ -54,6 +57,7 @@ Meteor.startup(function () {
   if (Meteor.users.find().count() === 0) {
     console.log('creating the first user');
     Accounts.createUser({
+      username: 'architect',
       email: 'architect@construct.club',
       password: 'password'
     });
@@ -65,6 +69,7 @@ Accounts.onCreateUser(function(options, user) {
   console.log('adding new user program');
   Programs.insert({
     type: 'user',
+    name: user.username,
     userId: user._id,
     position: {
       x: 0,

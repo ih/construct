@@ -1,5 +1,8 @@
 var Programs = new Mongo.Collection('programs');
 // https://github.com/josdirksen/learning-threejs/blob/master/chapter-09/07-first-person-camera.html
+Accounts.ui.config({
+  passwordSignupFields: 'USERNAME_AND_EMAIL'
+});
 
 Meteor.subscribe('all-programs');
 
@@ -31,7 +34,7 @@ class Construct {
   initEditor() {
     // this.editor = new Editor();
     var self = this;
-    self.editor = new Editor('#editor');
+    self.editor = new Editor('#editor', Programs);
 
 
     // if an object is selected load its code into the editor
@@ -89,7 +92,7 @@ class Construct {
             console.log('problem evaluating change, not saving');
           }
         }
-      } else {
+      } else if (self.editor.currentFunction === self.editor.UPDATE) {
 
         if (updateFunction) {
           try {
@@ -364,14 +367,14 @@ class Construct {
       // this doesn't need to happen each update
       try {
         var updateProgram = self.renderedObjects[program._id].updateProgram;
-        var updatedProgram = updateProgram(self.renderedObjects[program._id], program);
-        if (updatedProgram) {
-          Programs.update({_id: this.updatedProgram._id}, updatedProgram);
+        var updatedFields = updateProgram(self.renderedObjects[program._id], program);
+        if (updatedFields) {
+          Programs.update({_id: program._id}, {$set: updatedFields});
         }
       } catch (error) {
         var errorString = JSON.stringify(error);
         console.log(
-          `Problem updating program ${program._id}: ${errorString}`);
+          `Problem updating program ${program.name || program._id}: ${errorString}`);
       }
     });
   }

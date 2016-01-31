@@ -3,12 +3,17 @@
 // correspond to editable parts of a program then whatever is using the editor
 // (e.g. the main construct file) responds to changes and does the actual update
 // of the program
+
+var Programs;
+
 Editor = class Editor {
-  constructor(editorSelector) {
+  constructor(editorSelector, ProgramsCollection) {
+    Programs = ProgramsCollection;
 
     var self = this;
     self.INITIALIZE = 0;
     self.UPDATE = 1;
+    self.ATTRIBUTES = 2;
     self.isActive = false;
     self.editorSelector = editorSelector;
     self.isLoaded = false;
@@ -38,6 +43,9 @@ Editor = class Editor {
     });
     $('.update-code')[0].addEventListener('click', () => {
       self.showUpdateCode();
+    });
+    $('.show-attributes')[0].addEventListener('click', () => {
+      self.showAttributes();
     });
     $(self.programNameSelector)[0].addEventListener('change', (event) => {
       var newName = $(event.currentTarget).val();
@@ -75,7 +83,7 @@ Editor = class Editor {
   }
 
   loadProgram(program) {
-    console.log('loading program into editor:' + JSON.stringify(program));
+    //console.log('loading program into editor:' + JSON.stringify(program));
     this.programId = program._id;
     this.initializeFunction.set(program.initialize);
     this.updateFunction.set(program.update);
@@ -94,6 +102,19 @@ Editor = class Editor {
   showUpdateCode() {
     this.currentFunction = this.UPDATE;
     Tracker.nonreactive(() => {this.setValue(this.updateFunction.get(), -1);});
+  }
+
+  showAttributes() {
+    this.currentFunction = this.ATTRIBUTES;
+    Tracker.autorun((computation) => {
+      if (this.currentFunction === this.ATTRIBUTES) {
+        var program = Programs.findOne(this.programId);
+        var attributes = _.omit(program, ['initialize', 'update']);
+        this.setValue(JSON.stringify(attributes));
+      } else {
+        computation.stop();
+      }
+    });
   }
 
   clear() {

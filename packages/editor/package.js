@@ -12,7 +12,7 @@ Package.describe({
 
 Package.onUse(function(api) {
   api.versionsFrom('1.2.1');
-  api.use(['templating', 'ecmascript']);
+  api.use(['templating', 'ecmascript', 'mongo']);
   api.addFiles(['editor.html', 'editor.js'], 'client');
   api.export('Editor');
 });
