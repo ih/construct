@@ -381,6 +381,7 @@ class Construct {
 
   createNewProgram() {
     var newProgramPosition = Programs.findOne(this.userProgramId).position;
+    // the observer on the collection will render the new program
     var newProgramId = Programs.insert({
       position: {
         x: newProgramPosition.x,
@@ -405,7 +406,6 @@ class Construct {
       }
       `
     });
-    this.initProgram(newProgramId);
   }
 }
 
