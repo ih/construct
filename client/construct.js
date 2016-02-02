@@ -86,8 +86,6 @@ class Construct {
             Programs.update({_id: self.editor.programId}, {$set: {
               initialize: initializeFunction
             }});
-            self.removeRenderedObjects(changedProgramId);
-            self.initProgram(changedProgramId);
           } catch (error) {
             console.log('problem evaluating change, not saving');
           }
