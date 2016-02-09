@@ -124,6 +124,7 @@ Editor = class Editor {
     Programs.remove(this.programId, (error) => {
       console.log(JSON.stringify(error));
     });
+    this.clear();
   }
 
   clear() {
