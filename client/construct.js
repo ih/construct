@@ -433,3 +433,11 @@ Template.hello.onRendered(() => {
     animate();
   });
 });
+
+
+Template.position.helpers({
+  userPosition: () => {
+    var userProgram = Programs.findOne({type: 'user', userId: Meteor.userId()});
+    return `${Math.round(userProgram.position.x)}, ${Math.round(userProgram.position.z)}`;
+  }
+});

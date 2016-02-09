@@ -3,22 +3,23 @@
 </head>
 
 <body>
-  {{> hello}}
-  {{> editor}}
+  {{> loginButtons}}
+  {{#if currentUser}}
+    {{> hello}}
+    {{> editor}}
+  {{/if}}
 </body>
 
 <template name="hello">
-  {{> loginButtons}}
-  <div class="enable-pointer">Click here to use mouse view.</div>
 
+  {{#if currentUser}}
+    {{> position}}
+    <div class="enable-pointer">Click here to use mouse view.</div>
+  {{/if}}
   <div class="world">
   </div>
 </template>
 
-<template name="help">
-  <div class="help">
-    <ul>
-      <li></li>
-    </ul>
-  </div>
+<template name="position">
+  {{userPosition}}
 </template>
