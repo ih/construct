@@ -150,6 +150,9 @@ class Construct {
           self.removeRenderedObjects(updatedProgram._id);
           self.initProgram(updatedProgram._id);
         }
+      },
+      removed: (oldProgram) => {
+        self.removeRenderedObjects(oldProgram._id);
       }
     });
   }
@@ -219,7 +222,7 @@ class Construct {
 
       switch ( event.keyCode ) {
       case 66:
-        self.createNewProgram();
+        self.createProgram();
         break;
       case 38: // up
       case 87: // w
@@ -377,7 +380,7 @@ class Construct {
     });
   }
 
-  createNewProgram() {
+  createProgram() {
     var newProgramPosition = Programs.findOne(this.userProgramId).position;
     // the observer on the collection will render the new program
     var newProgramId = Programs.insert({

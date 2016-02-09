@@ -47,6 +47,9 @@ Editor = class Editor {
     $('.show-attributes')[0].addEventListener('click', () => {
       self.showAttributes();
     });
+    $('.delete-program')[0].addEventListener('click', () => {
+      self.deleteProgram();
+    });
     $(self.programNameSelector)[0].addEventListener('change', (event) => {
       var newName = $(event.currentTarget).val();
       self.programName.set(newName);
@@ -114,6 +117,12 @@ Editor = class Editor {
       } else {
         computation.stop();
       }
+    });
+  }
+
+  deleteProgram() {
+    Programs.remove(this.programId, (error) => {
+      console.log(JSON.stringify(error));
     });
   }
 
