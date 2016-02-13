@@ -118,7 +118,10 @@ class Construct {
         // use the object selector which will trigger the program to load
         self.objectSelector.selectObject(selectedProgramObject);
       } else {
-        console.warn('no program found?!');
+        console.log('problem finding rendered objects for ' + selectedValue +
+                    ' loading directly');
+        var selectedProgram = Programs.findOne(selectedValue);
+        self.editor.loadProgram(selectedProgram);
       }
     });
 
@@ -174,7 +177,7 @@ class Construct {
 
       self.renderedObjects[program._id] = programRenderedObjects;
     } catch (error) {
-      var errorString = JSON.stringify(error);
+      var errorString = error.message;
       console.warn(
         `Problem initializing program ${program._id}: ${errorString}`);
     }
@@ -312,6 +315,7 @@ class Construct {
     this.glRenderer.domElement.style.position = 'absolute';
     this.glRenderer.domElement.style.top = 0;
     this.glRenderer.domElement.style.zIndex = 1;
+    this.glRenderer.shadowMapEnabled = true;
   }
 
   initCSSRenderer() {
@@ -373,7 +377,7 @@ class Construct {
           Programs.update({_id: program._id}, {$set: updatedFields});
         }
       } catch (error) {
-        var errorString = JSON.stringify(error);
+        var errorString = error.message;
         console.log(
           `Problem updating program ${program.name || program._id}: ${errorString}`);
       }

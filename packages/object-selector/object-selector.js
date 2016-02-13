@@ -93,7 +93,9 @@ ObjectSelector = class ObjectSelector {
     if (!this.selectedObject.get()) {
       return;
     }
-    this.selectedObject.get().material.opacity = this.selectedObjectOpacity;
+    if (this.selectedObject.get().material) {
+      this.selectedObject.get().material.opacity = this.selectedObjectOpacity;
+    }
   }
 
 
