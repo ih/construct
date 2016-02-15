@@ -329,7 +329,6 @@ class Construct {
   initEvents() {
     THREEx.WindowResize(this.cssRenderer, this.camera);
     THREEx.WindowResize(this.glRenderer, this.camera);
-    THREEx.FullScreen.bindKey({charCode: 'm'.charCodeAt(0)});
   }
 
   render() {
