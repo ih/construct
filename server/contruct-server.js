@@ -28,29 +28,29 @@ Meteor.startup(function () {
       },
       initialize:
       `
-      (self) => {
-        var geometry = new THREE.CubeGeometry(100, 100, 100);
-        var material = new THREE.MeshBasicMaterial({color: '#00ff00'});
-        var position = self.position;
-        var cube = new THREE.Mesh(geometry, material);
-        cube.position.set(position.x, position.y, position.z);
-        cube.direction = 1;
-        return {cube: cube};
-      }
+(self) => {
+  var geometry = new THREE.CubeGeometry(100, 100, 100);
+  var material = new THREE.MeshBasicMaterial({color: '#00ff00'});
+  var position = self.position;
+  var cube = new THREE.Mesh(geometry, material);
+  cube.position.set(position.x, position.y, position.z);
+  cube.direction = 1;
+  return {cube: cube};
+}
       `,
       update:
       `
-      (renderedObjects, self) => {
-        var cube = renderedObjects['cube'];
-        if (cube.position.x > 100) {
-          cube.direction = -1;
-        } else if (cube.position.x < -100){
-          cube.direction = 1;
-        }
-        cube.position.x += cube.direction;
-        self.position.x += cube.direction;
-        return {position: self.position};
-      }
+(renderedObjects, self) => {
+  var cube = renderedObjects['cube'];
+  if (cube.position.x > 100) {
+    cube.direction = -1;
+  } else if (cube.position.x < -100){
+    cube.direction = 1;
+  }
+  cube.position.x += cube.direction;
+  self.position.x += cube.direction;
+  return {position: self.position};
+}
       `
     });
   }
@@ -79,26 +79,26 @@ Accounts.onCreateUser(function(options, user) {
     color: Utility.randomColor(),
     initialize:
     `
-    (self) => {
-      var geometry = new THREE.CubeGeometry(10, 10, 10);
-      var material = new THREE.MeshBasicMaterial({color: self.color});
-      var position = self.position;
-      var cube = new THREE.Mesh(geometry, material);
-      cube.position.set(position.x, position.y, position.z);
-      return {user: cube};
-      }
+(self) => {
+  var geometry = new THREE.CubeGeometry(10, 10, 10);
+  var material = new THREE.MeshBasicMaterial({color: self.color});
+  var position = self.position;
+  var cube = new THREE.Mesh(geometry, material);
+  cube.position.set(position.x, position.y, position.z);
+  return {user: cube};
+}
     `,
     update:
     `
-    (renderedObjects, self) => {
-      var user = renderedObjects['user'];
-      var deltaX = self.position.x - user.position.x;
-      var deltaY = self.position.y - user.position.y;
-      var deltaZ = self.position.z - user.position.z;
-      user.translateX(deltaX);
-      user.translateY(deltaY);
-      user.translateZ(deltaZ);
-    }
+(renderedObjects, self) => {
+  var user = renderedObjects['user'];
+  var deltaX = self.position.x - user.position.x;
+  var deltaY = self.position.y - user.position.y;
+  var deltaZ = self.position.z - user.position.z;
+  user.translateX(deltaX);
+  user.translateY(deltaY);
+  user.translateZ(deltaZ);
+}
     `
   });
 

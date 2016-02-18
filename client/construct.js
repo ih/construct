@@ -10,6 +10,7 @@ class Construct {
   constructor($container, user) {
     console.log('initializing the construct');
     this.scene = new THREE.Scene();
+
     this.cssScene = new THREE.Scene();
     this.objectSelector = new ObjectSelector('#editor');
     this.screenWidth = window.innerWidth;
@@ -301,7 +302,7 @@ class Construct {
 
   initCamera() {
     var [VIEW_ANGLE, ASPECT] = [45, this.screenWidth / this.screenHeight];
-    var [NEAR, FAR] = [.1, 20000];
+    var [NEAR, FAR] = [.1, 1000];
     this.camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
   }
 
@@ -316,6 +317,7 @@ class Construct {
     this.glRenderer.domElement.style.top = 0;
     this.glRenderer.domElement.style.zIndex = 1;
     this.glRenderer.shadowMapEnabled = true;
+    this.glRenderer.setClearColor(new THREE.Color(0x003366, 1.0));
   }
 
   initCSSRenderer() {
@@ -394,20 +396,20 @@ class Construct {
       },
       initialize:
       `
-      (self) => {
-        var geometry = new THREE.SphereGeometry(4, 10, 10);
-        var material = new THREE.MeshBasicMaterial({color: '#00FF00', wireframe: true});
-        var position = self.position;
-        var sphere = new THREE.Mesh(geometry, material);
-        sphere.position.set(position.x, position.y, position.z);
-        return {placeholder: sphere};
-      }
+(self) => {
+  var geometry = new THREE.SphereGeometry(4, 10, 10);
+  var material = new THREE.MeshBasicMaterial({color: '#00FF00', wireframe: true});
+  var position = self.position;
+  var sphere = new THREE.Mesh(geometry, material);
+  sphere.position.set(position.x, position.y, position.z);
+  return {placeholder: sphere};
+}
       `,
       update:
       `
-      (renderedObjects, self) => {
-        var sphere = renderedObjects['placeholder'];
-      }
+(renderedObjects, self) => {
+  var sphere = renderedObjects['placeholder'];
+}
       `
     });
   }
