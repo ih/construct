@@ -5,20 +5,11 @@
 <body>
   {{> loginButtons}}
   {{#if currentUser}}
-    {{> hello}}
     {{> editor}}
-  {{/if}}
-</body>
-
-<template name="hello">
-
-  {{#if currentUser}}
     {{> position}}
     <div class="enable-pointer">Click here to use mouse view.</div>
   {{/if}}
-  <div class="world">
-  </div>
-</template>
+</body>
 
 <template name="position">
   {{userPosition}}

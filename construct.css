@@ -1,12 +1,15 @@
-/* CSS declarations go here */
-html {
-    height: 100%;
+CSS declarations go here
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  color: #fff;
+  margin: 0px;
+  padding: 0;
+  overflow: hidden;
 }
-body {
-    margin: 0;
-    height: 100%;
-}
-canvas { width: 100%; height: 100% }
+
 .editor {
     z-index: 100;
 }
@@ -39,4 +42,8 @@ canvas { width: 100%; height: 100% }
 #editor {
     position: relative;
     height: 100%;
+}
+
+.webvr-button {
+    z-index: 1000;
 }

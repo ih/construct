@@ -24,12 +24,16 @@ class Construct {
     this.initCamera();
     this.initMouse();
     this.initGLRenderer();
-    this.initCSSRenderer();
+    //this.initCSSRenderer();
+    // in the future attach to $container
+    document.body.appendChild(this.glRenderer.domElement);
+    this.initWebVR();
     this.initEvents();
     this.initEditor();
 
-    $container.append(this.cssRenderer.domElement);
-    this.cssRenderer.domElement.appendChild(this.glRenderer.domElement);
+
+    //$container.append(this.cssRenderer.domElement);
+    //this.cssRenderer.domElement.appendChild(this.glRenderer.domElement);
   }
 
   initEditor() {
@@ -307,17 +311,16 @@ class Construct {
   }
 
   initGLRenderer() {
-    if (Detector.webgl) {
-      this.glRenderer = new THREE.WebGLRenderer( {antialias: true, alpha: true} );
-    } else {
-      this.glRenderer = new THREE.CanvasRenderer();
-    }
-    this.glRenderer.setSize(this.screenWidth, this.screenHeight);
-    this.glRenderer.domElement.style.position = 'absolute';
-    this.glRenderer.domElement.style.top = 0;
-    this.glRenderer.domElement.style.zIndex = 1;
+    this.glRenderer = new THREE.WebGLRenderer( {antialias: true, alpha: true});
+    // } else {
+    //   this.glRenderer = new THREE.CanvasRenderer();
+    // }
+    //this.glRenderer.setSize(this.screenWidth, this.screenHeight);
+    this.glRenderer.setPixelRatio(window.devicePixelRatio);
+    // this.glRenderer.domElement.style.position = 'absolute';
+    // this.glRenderer.domElement.style.top = 0;
+    // this.glRenderer.domElement.style.zIndex = 1;
     this.glRenderer.shadowMapEnabled = true;
-    this.glRenderer.setClearColor(new THREE.Color(0x003366, 1.0));
   }
 
   initCSSRenderer() {
@@ -328,17 +331,30 @@ class Construct {
     this.cssRenderer.domElement.style.top = 0;
   }
 
+  initWebVR() {
+    this.vrControls = new THREE.VRControls(this.camera);
+    this.vrEffect = new THREE.VREffect(this.glRenderer);
+    this.vrEffect.setSize(window.innerWidth, window.innerHeight);
+
+    var params = {
+      hideButton: false, // Default: false.
+      isUndistorted: false // Default: false.
+    };
+    this.vrManager = new WebVRManager(this.glRenderer, this.vrEffect, params);
+  }
+
   initEvents() {
-    THREEx.WindowResize(this.cssRenderer, this.camera);
+    //THREEx.WindowResize(this.cssRenderer, this.camera);
     THREEx.WindowResize(this.glRenderer, this.camera);
   }
 
-  render() {
+  render(timestamp) {
     if (!this.controls.enabled && this.editor.isActive) {
       this.objectSelector.selectObjects(this.scene, this.camera);
     }
-    this.glRenderer.render(this.scene, this.camera);
-    this.cssRenderer.render(this.cssScene, this.camera);
+    //    this.glRenderer.render(this.scene, this.camera);
+    //    this.cssRenderer.render(this.cssScene, this.camera);
+    this.vrManager.render(this.scene, this.camera, timestamp);
   }
 
   update() {
@@ -415,8 +431,9 @@ class Construct {
   }
 }
 
-Template.hello.onRendered(() => {
-  var $container = this.$('.world');
+Template.body.onRendered(() => {
+  console.log('body rendered');
+  var $container = this.$('body');
 
   var userLoadedComputation = Tracker.autorun((computation) => {
     var user = Meteor.user();
@@ -429,16 +446,19 @@ Template.hello.onRendered(() => {
     // do this here instead of inside the autorun b/c if it was in the autorun
     // stopping that computation stops any nested computations
     var construct = new Construct($container, Meteor.user());
-
-    function animate() {
+    construct.render();
+    var lastRender = 0;
+    function animate(timestamp) {
+      var delta = Math.min(timestamp - lastRender, 500);
+      lastRender = timestamp;
       requestAnimationFrame(animate);
       construct.render();
-      construct.update();
+      construct.update(timestamp);
     }
     animate();
   });
-});
 
+});
 
 Template.position.helpers({
   userPosition: () => {
