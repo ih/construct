@@ -9,6 +9,7 @@ Meteor.subscribe('all-programs');
 class Construct {
   constructor($container, user) {
     console.log('initializing the construct');
+    this.$container = $container;
     this.scene = new THREE.Scene();
 
     this.cssScene = new THREE.Scene();
@@ -26,13 +27,13 @@ class Construct {
     this.initGLRenderer();
     //this.initCSSRenderer();
     // in the future attach to $container
-    document.body.appendChild(this.glRenderer.domElement);
+
     this.initWebVR();
     this.initEvents();
     this.initEditor();
 
 
-    //$container.append(this.cssRenderer.domElement);
+    this.$container.append(this.glRenderer.domElement);
     //this.cssRenderer.domElement.appendChild(this.glRenderer.domElement);
   }
 
@@ -300,7 +301,9 @@ class Construct {
       }, false);
 
     } else {
-      console.error('no pointerlock');
+      console.warn('no pointerlock');
+      this.controlsEnabled = false;
+      this.controls = null;
     }
   }
 
@@ -317,10 +320,9 @@ class Construct {
     // }
     //this.glRenderer.setSize(this.screenWidth, this.screenHeight);
     this.glRenderer.setPixelRatio(window.devicePixelRatio);
-    // this.glRenderer.domElement.style.position = 'absolute';
-    // this.glRenderer.domElement.style.top = 0;
-    // this.glRenderer.domElement.style.zIndex = 1;
-    this.glRenderer.shadowMapEnabled = true;
+    this.glRenderer.setClearColor( 0xffffff );
+    this.glRenderer.setSize(this.screenWidth, this.screenHeight);
+    this.glRenderer.shadowMap.enabled = true;
   }
 
   initCSSRenderer() {
@@ -332,29 +334,43 @@ class Construct {
   }
 
   initWebVR() {
-    this.vrControls = new THREE.VRControls(this.camera);
-    this.vrEffect = new THREE.VREffect(this.glRenderer);
-    this.vrEffect.setSize(window.innerWidth, window.innerHeight);
+    var fullScreenButton = $('.full-screen')[0];
 
-    var params = {
-      hideButton: false, // Default: false.
-      isUndistorted: false // Default: false.
+    if ( navigator.getVRDisplays === undefined && navigator.getVRDevices === undefined ) {
+
+      fullScreenButton.innerHTML = 'Your browser doesn\'t support WebVR';
+      fullScreenButton.classList.add('error');
+
+    }
+    this.vrControls = new THREE.VRControls(this.camera);
+    this.vrEffect = new THREE.VREffect(this.glRenderer, (error) => {
+      fullScreenButton.innerHTML = error;
+      fullScreenButton.classList.add('error');
+    });
+
+    fullScreenButton.onclick = function() {
+      this.vrEffect.setFullScreen( true );
     };
-    this.vrManager = new WebVRManager(this.glRenderer, this.vrEffect, params);
+    this.vrEffect.setSize(window.innerWidth, window.innerHeight);
   }
 
   initEvents() {
-    //THREEx.WindowResize(this.cssRenderer, this.camera);
-    THREEx.WindowResize(this.glRenderer, this.camera);
+    window.addEventListener('resize', () => {
+      this.camera.aspect = window.innerWidth / window.innerHeight;
+      this.camera.updateProjectionMatrix();
+      this.vrEffect.setSize( window.innerWidth, window.innerHeight );
+    }, false);
   }
 
-  render(timestamp) {
-    if (!this.controls.enabled && this.editor.isActive) {
+  render() {
+    if (this.controls && !this.controls.enabled && this.editor && this.editor.isActive) {
       this.objectSelector.selectObjects(this.scene, this.camera);
     }
+
+    this.vrControls.update();
     //    this.glRenderer.render(this.scene, this.camera);
     //    this.cssRenderer.render(this.cssScene, this.camera);
-    this.vrManager.render(this.scene, this.camera, timestamp);
+    this.vrEffect.render(this.scene, this.camera);
   }
 
   update() {
@@ -362,24 +378,26 @@ class Construct {
 
     this.updatePrograms();
 
+    var user = this.controls ? this.controls.getObject() : this.camera;
+
     if (this.moveForward) {
-      this.controls.getObject().translateZ(-delta);
+      user.translateZ(-delta);
     }
     if (this.moveBackward) {
-      this.controls.getObject().translateZ(delta);
+      user.translateZ(delta);
     }
 
     if (this.moveLeft) {
-      this.controls.getObject().translateX(-delta);
+      user.translateX(-delta);
     }
     if (this.moveRight) {
-      this.controls.getObject().translateX(delta);
+      user.translateX(delta);
     }
 
     if (this.moveForward || this.moveBackward || this.moveLeft ||
         this.moveRight) {
       Programs.update({_id: this.userProgramId}, {$set: {
-        position: this.controls.getObject().position}});
+        position: user.position}});
     }
   }
 
@@ -431,9 +449,9 @@ class Construct {
   }
 }
 
-Template.body.onRendered(() => {
+Template.construct.onRendered(() => {
   console.log('body rendered');
-  var $container = this.$('body');
+  var $container = this.$('.world');
 
   var userLoadedComputation = Tracker.autorun((computation) => {
     var user = Meteor.user();
@@ -447,13 +465,10 @@ Template.body.onRendered(() => {
     // stopping that computation stops any nested computations
     var construct = new Construct($container, Meteor.user());
     construct.render();
-    var lastRender = 0;
-    function animate(timestamp) {
-      var delta = Math.min(timestamp - lastRender, 500);
-      lastRender = timestamp;
+    function animate() {
       requestAnimationFrame(animate);
       construct.render();
-      construct.update(timestamp);
+      construct.update();
     }
     animate();
   });
@@ -463,6 +478,10 @@ Template.body.onRendered(() => {
 Template.position.helpers({
   userPosition: () => {
     var userProgram = Programs.findOne({type: 'user', userId: Meteor.userId()});
-    return `${Math.round(userProgram.position.x)}, ${Math.round(userProgram.position.z)}`;
+    if (userProgram) {
+      return `${Math.round(userProgram.position.x)}, ${Math.round(userProgram.position.z)}`;
+    } else {
+      return 'position not found';
+    }
   }
 });
