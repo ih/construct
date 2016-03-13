@@ -334,6 +334,7 @@ class Construct {
   }
 
   initWebVR() {
+    var self = this;
     var fullScreenButton = $('.full-screen')[0];
 
     if ( navigator.getVRDisplays === undefined && navigator.getVRDevices === undefined ) {
@@ -349,7 +350,8 @@ class Construct {
     });
 
     fullScreenButton.onclick = function() {
-      this.vrEffect.setFullScreen( true );
+      self.vrEffect.setFullScreen( true );
+
     };
     this.vrEffect.setSize(window.innerWidth, window.innerHeight);
   }
@@ -479,7 +481,7 @@ Template.position.helpers({
   userPosition: () => {
     var userProgram = Programs.findOne({type: 'user', userId: Meteor.userId()});
     if (userProgram) {
-      return `${Math.round(userProgram.position.x)}, ${Math.round(userProgram.position.z)}`;
+      return `${Math.round(userProgram.position.x)}, ${Math.round(userProgram.position.z)}, ${Math.round(userProgram.position.y)}`;
     } else {
       return 'position not found';
     }

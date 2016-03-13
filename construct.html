@@ -5,14 +5,15 @@
 <body>
   {{> loginButtons}}
   {{#if currentUser}}
-    {{> construct}}
+    {{> position}}
     {{> editor}}
+    {{> construct}}
   {{/if}}
 </body>
 
 <template name="construct">
   {{#if currentUser}}
-    {{> position}}
+
       <div class="enable-pointer">Click here to use mouse view.</div>
       <div class="menu">
         <div class="button full-screen">Start VR Mode</div>
@@ -23,5 +24,7 @@
 </template>
 
 <template name="position">
-  {{userPosition}}
+  <div class="user-position">
+    {{userPosition}}
+  </div>
 </template>

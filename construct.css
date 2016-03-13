@@ -4,18 +4,21 @@ html {
     height: 100%;
 }
 
-html, body {
+body {
   width: 100%;
   height: 100%;
   background-color: #fff;
-  color: #fff;
   margin: 0px;
   padding: 0;
   overflow: hidden;
 }
 
-.editor {
+#editor {
+    position: fixed;
+    top: 30px;
     z-index: 100;
+    width: 50%;
+    height: 100%;
 }
 
 canvas {
@@ -23,17 +26,24 @@ canvas {
     height: 100%;
 }
 
+.user-position {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    z-index: 100;
+    color: black;
+}
+
 #login-buttons {
     z-index: 1000;
     position: fixed;
-    top: 20px;
+    top: 10px;
     left: 20px;
 }
 
 #ace-editor {
-    position: absolute;
-    width: 50%;
     height: 100%;
+    width: 100%;
     opacity: .6;
     z-index: 105;
 }
@@ -43,15 +53,11 @@ canvas {
 }
 
 .enable-pointer {
-    position: absolute;
-    right: 0;
-    width: 25%;
-    z-index: 1000;
+    position: fixed;
+    top: 10px;
+    right: 20px;
     background-color: green;
-}
-
-#editor {
-    height: 100%;
+    padding: 10px;
 }
 
 .menu {
