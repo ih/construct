@@ -1,15 +1,16 @@
 var Programs = new Mongo.Collection('programs');
 
-
 Programs.allow({
   insert: function (userId, doc) {
     return true;
   },
   update: function (userId, doc) {
-    return true;
+    var user = Meteor.users.findOne(userId);
+    return _.contains(doc.contributors, user.username) || user.username === 'architect';
   },
   remove: function (userId, doc) {
-    return true;
+    var user = Meteor.users.findOne(userId);
+    return _.contains(doc.contributors, user.username) || user.username === 'architect';
   }
 });
 

@@ -42,7 +42,10 @@ class Construct {
     var self = this;
     self.editor = new Editor('#editor', Programs);
 
-
+    function failedSave(error) {
+      console.log('did not save, reverting program');
+      self.editor.loadProgram(self.editor.programId);
+    }
     // if an object is selected load its code into the editor
     Tracker.autorun(() => {
       console.log('object selection changed!');
@@ -75,7 +78,7 @@ class Construct {
       }
       Programs.update({_id: self.editor.programId}, {$set: {
         name: programName
-      }});
+      }}, failedSave);
       return true;
     });
     // if init code is edited update the program object
@@ -91,7 +94,7 @@ class Construct {
             eval(initializeFunction);
             Programs.update({_id: self.editor.programId}, {$set: {
               initialize: initializeFunction
-            }});
+            }}, failedSave);
           } catch (error) {
             console.log('problem evaluating change, not saving');
           }
@@ -104,7 +107,7 @@ class Construct {
             eval(updateFunction);
             Programs.update({_id: self.editor.programId}, {$set: {
               update: updateFunction
-            }});
+            }}, failedSave);
           } catch (error) {
             console.log('problem evaluating change, not saving');
           }
@@ -430,6 +433,7 @@ class Construct {
         y: newProgramPosition.y,
         z: newProgramPosition.z
       },
+      contributors: [Meteor.user().username],
       initialize:
       `
 (self) => {
