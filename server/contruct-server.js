@@ -78,6 +78,7 @@ Accounts.onCreateUser(function(options, user) {
       z: 0
     },
     color: Utility.randomColor(),
+    contributors: [user.username],
     initialize:
     `
 (self) => {
