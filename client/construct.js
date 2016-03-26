@@ -43,8 +43,8 @@ class Construct {
     self.editor = new Editor('#editor', Programs);
 
     function failedSave(error) {
-      console.log('did not save, reverting program');
-      self.editor.loadProgram(self.editor.programId);
+      //console.log('did not save, reverting program');
+      //self.editor.loadProgram(self.editor.programId);
     }
     // if an object is selected load its code into the editor
     Tracker.autorun(() => {

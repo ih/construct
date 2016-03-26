@@ -4,7 +4,7 @@ Programs.allow({
   insert: function (userId, doc) {
     return true;
   },
-  update: function (userId, doc) {
+  update: function (userId, doc, fieldNames) {
     var user = Meteor.users.findOne(userId);
     return _.contains(doc.contributors, user.username) || user.username === 'architect';
   },
@@ -50,7 +50,6 @@ Meteor.startup(function () {
   }
   cube.position.x += cube.direction;
   self.position.x += cube.direction;
-  return {position: self.position};
 }
       `
     });
