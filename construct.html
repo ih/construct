@@ -5,26 +5,37 @@
 <body>
   {{> loginButtons}}
   {{#if currentUser}}
-    {{> position}}
-    {{> editor}}
     {{> construct}}
+    {{> hud}}
   {{/if}}
 </body>
 
 <template name="construct">
-  {{#if currentUser}}
-
-      <div class="enable-pointer">Click here to use mouse view.</div>
-      <div class="menu">
-        <div class="button full-screen">Start VR Mode</div>
-      </div>
-      <div class="world">
-      </div>
-  {{/if}}
+  <div class="world">
+  </div>
 </template>
 
 <template name="position">
   <div class="user-position">
     {{userPosition}}
+  </div>
+</template>
+
+<template name="hud">
+  {{> position}}
+
+  {{#if getMouseView}}
+    <div class="disable-mouse-view mouse-view-toggle">
+      Press 'esc' to disable mouse controls.
+    </div>
+  {{else}}
+    <div class="enable-mouse-view mouse-view-toggle">
+      Click here to use mouse view.
+    </div>
+  {{/if}}
+  {{> editor}}
+  <div class="pointer-lock"></div>
+  <div class="menu">
+    <div class="button full-screen">Start VR Mode</div>
   </div>
 </template>

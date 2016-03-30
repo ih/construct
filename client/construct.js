@@ -1,5 +1,8 @@
 var Programs = new Mongo.Collection('programs');
 // https://github.com/josdirksen/learning-threejs/blob/master/chapter-09/07-first-person-camera.html
+
+var construct = null;
+
 Accounts.ui.config({
   passwordSignupFields: 'USERNAME_AND_EMAIL'
 });
@@ -35,6 +38,7 @@ class Construct {
 
     this.$container.append(this.glRenderer.domElement);
     //this.cssRenderer.domElement.appendChild(this.glRenderer.domElement);
+    Session.set('constructReady', true);
   }
 
   initEditor() {
@@ -266,7 +270,7 @@ class Construct {
   }
 
   initMouse() {
-    this.controlsEnabled = false;
+    //this.controlsEnabled = false;
     var havePointerLock = (
       'pointerLockElement' in document ||
         'mozPointerLockElement' in document ||
@@ -277,35 +281,38 @@ class Construct {
       this.scene.add(this.controls.getObject());
       this.controls.getObject().position.copy(
         Programs.findOne(this.userProgramId).position);
-      var element = $('.enable-pointer')[0];
+      // var element = $('.enable-pointer')[0];
 
-      var self = this;
-      function pointerlockchange(event) {
-        if (document.pointerLockElement === element) {
-          this.controlsEnabled = true;
-          self.controls.enabled = true;
-        } else {
-          self.controls.enabled = false;
-        }
-      }
+      // var self = this;
+      // function pointerlockchange(event) {
+      //   console.log('pointer lock chagned');
+      //   if (document.pointerLockElement === element) {
+      //     //this.controlsEnabled = true;
+      //     self.controls.enabled = true;
+      //     self.mouseView.set(true);
+      //   } else {
+      //     self.controls.enabled = false;
+      //     self.mouseView.set(false);
+      //   }
+      // }
 
-      var pointerlockerror = (event) => {
-      };
+      // var pointerlockerror = (event) => {
+      // };
 
-      // Hook pointer lock state change events
-      document.addEventListener('pointerlockchange', pointerlockchange, false);
-      document.addEventListener('pointerlockerror', pointerlockerror, false);
-      element.addEventListener('click', (event) => {
-        // Ask the browser to lock the pointer
-        element.requestPointerLock = (
-          element.requestPointerLock || element.mozRequestPointerLock ||
-            element.webkitRequestPointerLock);
-        element.requestPointerLock();
-      }, false);
+      // // Hook pointer lock state change events
+      // document.addEventListener('pointerlockchange', pointerlockchange, false);
+      // document.addEventListener('pointerlockerror', pointerlockerror, false);
+      // element.addEventListener('click', (event) => {
+      //   // Ask the browser to lock the pointer
+      //   element.requestPointerLock = (
+      //     element.requestPointerLock || element.mozRequestPointerLock ||
+      //       element.webkitRequestPointerLock);
+      //   element.requestPointerLock();
+      // }, false);
 
     } else {
       console.warn('no pointerlock');
-      this.controlsEnabled = false;
+      //this.controlsEnabled = false;
       this.controls = null;
     }
   }
@@ -469,7 +476,9 @@ Template.construct.onRendered(() => {
   userLoadedComputation.onStop(() => {
     // do this here instead of inside the autorun b/c if it was in the autorun
     // stopping that computation stops any nested computations
-    var construct = new Construct($container, Meteor.user());
+    console.log('creating construct');
+    construct = new Construct($container, Meteor.user());
+    Session.set('constructInitialized', true);
     construct.render();
     function animate() {
       requestAnimationFrame(animate);
@@ -489,5 +498,37 @@ Template.position.helpers({
     } else {
       return 'position not found';
     }
+  }
+});
+
+Template.hud.helpers({
+  getMouseView: () => {
+    return Session.get('mouseView');
+  }
+});
+
+Template.hud.onRendered(() => {
+  document.addEventListener('pointerlockchange', () => {
+    if (document.pointerLockElement) {
+      construct.controls.enabled = true;
+    } else {
+      construct.controls.enabled = false;
+      Session.set('mouseView', false);
+    }
+  }, false);
+
+  document.addEventListener('pointerlockerror', () => {
+
+  }, false);
+});
+
+Template.hud.events({
+  'click .enable-mouse-view': (event) => {
+    Session.set('mouseView', true);
+    var element = $('.world')[0];
+    element.requestPointerLock = (
+      element.requestPointerLock || element.mozRequestPointerLock ||
+        element.webkitRequestPointerLock);
+    element.requestPointerLock();
   }
 });
