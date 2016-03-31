@@ -32,6 +32,12 @@
     <div class="enable-mouse-view mouse-view-toggle">
       Click here to use mouse view.
     </div>
+    {{#if editorOpen}}
+      <div class="close-editor">Close Editor</div>
+    {{else}}
+      <div class="open-editor">Open Editor</div>
+      <div class="create-program">Create Program</div>
+    {{/if}}
   {{/if}}
   {{> editor}}
   <div class="pointer-lock"></div>

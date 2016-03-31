@@ -227,12 +227,12 @@ class Construct {
     var onKeyDown = (event) => {
       if (event.keyCode === 69 && !self.editor.programId) {
         self.editor.toggle();
-        if (!self.editor.isActive) {
+        if (!self.editor.isActive.get()) {
           self.objectSelector.unselectAll();
 
         }
         return;
-      } else if (self.editor.isActive) {
+      } else if (self.editor.isActive.get()) {
         return;
       }
 
@@ -375,7 +375,7 @@ class Construct {
   }
 
   render() {
-    if (this.controls && !this.controls.enabled && this.editor && this.editor.isActive) {
+    if (this.controls && !this.controls.enabled && this.editor && this.editor.isActive.get()) {
       this.objectSelector.selectObjects(this.scene, this.camera);
     }
 
@@ -504,6 +504,12 @@ Template.position.helpers({
 Template.hud.helpers({
   getMouseView: () => {
     return Session.get('mouseView');
+  },
+  editorOpen: () => {
+    if(Session.get('constructReady')) {
+      return construct && construct.editor.isActive.get();
+    }
+    return false;
   }
 });
 
@@ -523,12 +529,21 @@ Template.hud.onRendered(() => {
 });
 
 Template.hud.events({
-  'click .enable-mouse-view': (event) => {
+  'click .enable-mouse-view': () => {
     Session.set('mouseView', true);
     var element = $('.world')[0];
     element.requestPointerLock = (
       element.requestPointerLock || element.mozRequestPointerLock ||
         element.webkitRequestPointerLock);
     element.requestPointerLock();
+  },
+  'click .open-editor': () => {
+    construct.editor.activate();
+  },
+  'click .close-editor': () => {
+    construct.editor.deactivate();
+  },
+  'click .create-program': () => {
+    construct.createProgram();
   }
 });

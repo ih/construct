@@ -86,3 +86,21 @@ canvas {
     pointer-events: none;
     background-color: red;
 }
+
+.open-editor {
+    position: fixed;
+    left: 0px;
+    top: 50%;
+}
+
+.create-program {
+    position: fixed;
+    left: 0px;
+    top: 52%;
+}
+
+.close-editor {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+}

@@ -14,7 +14,7 @@ Editor = class Editor {
     self.INITIALIZE = 0;
     self.UPDATE = 1;
     self.ATTRIBUTES = 2;
-    self.isActive = false;
+    self.isActive = new ReactiveVar(false);
     self.editorSelector = editorSelector;
     self.isLoaded = false;
     self.programId = null;
@@ -68,13 +68,21 @@ Editor = class Editor {
   }
 
   toggle() {
-    if (this.isActive) {
-      $(this.editorSelector).hide();
-      this.isActive = false;
+    if (this.isActive.get()) {
+      this.deactivate();
     } else {
-      $(this.editorSelector).show();
-      this.isActive = true;
+      this.activate();
     }
+  }
+
+  activate() {
+    $(this.editorSelector).show();
+    this.isActive.set(true);
+  }
+
+  deactivate() {
+    $(this.editorSelector).hide();
+    this.isActive.set(false);
   }
 
   insert(text) {

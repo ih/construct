@@ -4,7 +4,6 @@
 # 'meteor add' and 'meteor remove' will edit this file for you,
 # but you can also edit it by hand.
 
-standard-minifiers
 meteor-base
 mobile-experience
 mongo
@@ -27,3 +26,5 @@ arch:ace-editor
 irvin:object-selector
 reactive-var
 twbs:bootstrap
+standard-minifier-css
+standard-minifier-js
