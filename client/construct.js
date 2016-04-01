@@ -530,6 +530,7 @@ Template.hud.onRendered(() => {
 
 Template.hud.events({
   'click .enable-mouse-view': () => {
+    construct.editor.deactivate();
     Session.set('mouseView', true);
     var element = $('.world')[0];
     element.requestPointerLock = (

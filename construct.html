@@ -6,7 +6,9 @@
   {{> loginButtons}}
   {{#if currentUser}}
     {{> construct}}
+    <div class="hud-container">
     {{> hud}}
+    </div>
   {{/if}}
 </body>
 
@@ -25,18 +27,20 @@
   {{> position}}
 
   {{#if getMouseView}}
-    <div class="disable-mouse-view mouse-view-toggle">
-      Press 'esc' to disable mouse controls.
+    <div class="button disable-mouse-view mouse-view-toggle">
+      Press 'esc' to disable mouse view. <br> Use 'w' 'a' 's' and 'd' to move around.
     </div>
   {{else}}
-    <div class="enable-mouse-view mouse-view-toggle">
+    <div class="button enable-mouse-view mouse-view-toggle">
       Click here to use mouse view.
     </div>
     {{#if editorOpen}}
-      <div class="close-editor">Close Editor</div>
+      <div class="button close-editor">Close Editor</div>
     {{else}}
-      <div class="open-editor">Open Editor</div>
-      <div class="create-program">Create Program</div>
+      <div class="side-menu">
+        <div class="button open-editor">Open Editor</div>
+        <div class="button create-program">Create Program</div>
+      </div>
     {{/if}}
   {{/if}}
   {{> editor}}

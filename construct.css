@@ -67,7 +67,6 @@ canvas {
 }
 
 .button {
-    display: inline-block;
     padding: 8px;
     color: #FFF;
     background-color: #555;
@@ -87,16 +86,16 @@ canvas {
     background-color: red;
 }
 
-.open-editor {
+.side-menu {
     position: fixed;
     left: 0px;
     top: 50%;
+
+
 }
 
-.create-program {
-    position: fixed;
-    left: 0px;
-    top: 52%;
+.open-editor {
+    margin-bottom: 10px;
 }
 
 .close-editor {
