@@ -32,6 +32,7 @@ Editor = class Editor {
       self.editor = editor;
       self.isLoaded = true;
       self.initializeEvents();
+      self.setValue(self.defaultText());
     });
     $(this.editorSelector).hide();
   }
@@ -137,7 +138,7 @@ Editor = class Editor {
 
   clear() {
     // change visible parts of the editor
-    this.setValue('');
+    this.setValue(this.defaultText());
     $(this.programNameSelector).val(null);
     $(this.programSelectorSelector).val(null);
 
@@ -166,6 +167,25 @@ Editor = class Editor {
           selected: program._id === self.programId
         }));
     });
+  }
+
+  defaultText() {
+    return `
+Click on an object or select one from the drop down menu to see it's source code.
+
+You can only edit programs where you are listed as a contributor (click the
+'Attributes' button to see the list of contributors as well as other properties
+of the program.
+
+Each program has two main functions.  The 'Initialize' function runs when
+the world is loaded and the 'update' function that runs with the rendering
+loop (many times per second).  You can view each of these functions by
+pressing the buttons above.
+
+Check out the 'example program' in the drop down menu to see how to write
+initialize and update functions for your program.
+
+      `;
   }
 
 };

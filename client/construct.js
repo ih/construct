@@ -126,8 +126,11 @@ class Construct {
       var selectedProgramObject = _.values(_.omit(
         self.renderedObjects[selectedValue], 'updateProgram'))[0];
       console.log('the value selected');
-      console.log(this.value);
-      if (selectedProgramObject) {
+      console.log(selectedValue);
+      if (selectedValue === 'None') {
+        self.editor.clear();
+      }
+      else if (selectedProgramObject) {
         // use the object selector which will trigger the program to load
         self.objectSelector.selectObject(selectedProgramObject);
       } else {
