@@ -228,7 +228,7 @@ class Construct {
     };
 
     var onKeyDown = (event) => {
-      if (event.keyCode === 69 && !self.editor.programId) {
+      if (event.keyCode === 69 && !self.editor.isActive.get()) {
         self.editor.toggle();
         if (!self.editor.isActive.get()) {
           self.objectSelector.unselectAll();
