@@ -228,7 +228,7 @@ class Construct {
     };
 
     var onKeyDown = (event) => {
-      if (event.keyCode === 69 && !self.editor.isActive.get()) {
+      if (event.keyCode === 69 && !self.editor.isActive.get() && !self.controls.enabled) {
         self.editor.toggle();
         if (!self.editor.isActive.get()) {
           self.objectSelector.unselectAll();
@@ -240,7 +240,7 @@ class Construct {
       }
 
       switch ( event.keyCode ) {
-      case 66:
+      case 67:
         self.createProgram();
         break;
       case 38: // up
@@ -260,9 +260,6 @@ class Construct {
       case 39: // right
       case 68: // d
         self.moveRight = true;
-        break;
-      case 69: // e
-        self.editor.toggle();
         break;
       }
     };
@@ -284,35 +281,6 @@ class Construct {
       this.scene.add(this.controls.getObject());
       this.controls.getObject().position.copy(
         Programs.findOne(this.userProgramId).position);
-      // var element = $('.enable-pointer')[0];
-
-      // var self = this;
-      // function pointerlockchange(event) {
-      //   console.log('pointer lock chagned');
-      //   if (document.pointerLockElement === element) {
-      //     //this.controlsEnabled = true;
-      //     self.controls.enabled = true;
-      //     self.mouseView.set(true);
-      //   } else {
-      //     self.controls.enabled = false;
-      //     self.mouseView.set(false);
-      //   }
-      // }
-
-      // var pointerlockerror = (event) => {
-      // };
-
-      // // Hook pointer lock state change events
-      // document.addEventListener('pointerlockchange', pointerlockchange, false);
-      // document.addEventListener('pointerlockerror', pointerlockerror, false);
-      // element.addEventListener('click', (event) => {
-      //   // Ask the browser to lock the pointer
-      //   element.requestPointerLock = (
-      //     element.requestPointerLock || element.mozRequestPointerLock ||
-      //       element.webkitRequestPointerLock);
-      //   element.requestPointerLock();
-      // }, false);
-
     } else {
       console.warn('no pointerlock');
       //this.controlsEnabled = false;
