@@ -90,11 +90,11 @@ class Construct {
 
       var initializeFunction = self.editor.initializeFunction.get();
       var updateFunction = self.editor.updateFunction.get();
-      if (self.editor.currentFunction === self.editor.INITIALIZE) {
+      var programAttributes = self.editor.programAttributes.get();
+      if (self.editor.currentSection === self.editor.INITIALIZE) {
         console.log('updating the init function');
         if (initializeFunction) {
           try {
-            var changedProgramId = self.editor.programId;
             eval(initializeFunction);
             Programs.update({_id: self.editor.programId}, {$set: {
               initialize: initializeFunction
@@ -103,11 +103,10 @@ class Construct {
             console.log('problem evaluating change, not saving');
           }
         }
-      } else if (self.editor.currentFunction === self.editor.UPDATE) {
+      } else if (self.editor.currentSection === self.editor.UPDATE) {
 
         if (updateFunction) {
           try {
-            var changedProgramId = self.editor.programId;
             eval(updateFunction);
             Programs.update({_id: self.editor.programId}, {$set: {
               update: updateFunction
@@ -115,6 +114,16 @@ class Construct {
           } catch (error) {
             console.log('problem evaluating change, not saving');
           }
+        }
+      } else if (self.editor.currentSection === self.editor.ATTRIBUTES) {
+        if (programAttributes) {
+          try {
+            programAttributes = _.omit(JSON.parse(programAttributes), '_id');
+            Programs.update({_id: self.editor.programId}, {$set: programAttributes});
+          } catch (error) {
+            console.log('problem parsing attributes, not saving');
+          }
+
         }
       }
     });

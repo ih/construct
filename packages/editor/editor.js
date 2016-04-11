@@ -21,7 +21,8 @@ Editor = class Editor {
     self.initializeFunction = new ReactiveVar(null);
     self.updateFunction = new ReactiveVar(null);
     self.programName = new ReactiveVar(null);
-    self.currentFunction = self.INITIALIZE;
+    self.programAttributes = new ReactiveVar(null);
+    self.currentSection = self.INITIALIZE;
     self.programSelectorSelector = '.program-selector';
     self.programNameSelector = '.program-name-field';
 
@@ -31,6 +32,9 @@ Editor = class Editor {
     }, (editor) => {
       self.editor = editor;
       self.isLoaded = true;
+      self.editor.session.setOptions({
+        tabSize: 2
+      });
       self.initializeEvents();
       self.setValue(self.defaultText());
     });
@@ -59,11 +63,13 @@ Editor = class Editor {
       if (!self.programId) {
         return;
       }
-      if (self.currentFunction === self.INITIALIZE) {
+      if (self.currentSection === self.INITIALIZE) {
         console.log('inside the change handler ' + self.programId);
         self.initializeFunction.set(self.editor.getSession().getValue());
-      } else if (self.currentFunction === self.UPDATE) {
+      } else if (self.currentSection === self.UPDATE) {
         self.updateFunction.set(self.editor.getSession().getValue());
+      } else if (self.currentSection === self.ATTRIBUTES) {
+        self.programAttributes.set(self.editor.getSession().getValue());
       }
     });
   }
@@ -106,23 +112,23 @@ Editor = class Editor {
 
   showInitializationCode() {
     console.log('showing init code ' + this);
-    this.currentFunction = this.INITIALIZE;
+    this.currentSection = this.INITIALIZE;
     var code = this.initializeFunction.get();
     Tracker.nonreactive(() => {this.setValue(code, -1);});
   }
 
   showUpdateCode() {
-    this.currentFunction = this.UPDATE;
+    this.currentSection = this.UPDATE;
     Tracker.nonreactive(() => {this.setValue(this.updateFunction.get(), -1);});
   }
 
   showAttributes() {
-    this.currentFunction = this.ATTRIBUTES;
+    this.currentSection = this.ATTRIBUTES;
     Tracker.autorun((computation) => {
-      if (this.currentFunction === this.ATTRIBUTES) {
+      if (this.currentSection === this.ATTRIBUTES) {
         var program = Programs.findOne(this.programId);
         var attributes = _.omit(program, ['initialize', 'update']);
-        this.setValue(JSON.stringify(attributes));
+        this.setValue(JSON.stringify(attributes, null, 2));
       } else {
         computation.stop();
       }
@@ -146,7 +152,7 @@ Editor = class Editor {
     this.programName.set(null);
     this.initializeFunction.set(null);
     this.updateFunction.set(null);
-    this.currentFunction = self.INITIALIZE;
+    this.currentSection = self.INITIALIZE;
   }
 
   updateProgramSelector(programsCursor) {
