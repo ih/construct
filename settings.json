@@ -1,0 +1,8 @@
+{
+  "galaxy.meteor.com": {
+      "env": {
+          "MONGO_URL": "mongodb://ih:dr0wss4P!@ds043972.mlab.com:43972/construct"
+      },
+      "log_level": "warning"
+  }
+}

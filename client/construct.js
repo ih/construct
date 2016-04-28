@@ -12,8 +12,10 @@ Meteor.subscribe('all-programs');
 class Construct {
   constructor($container, user) {
     console.log('initializing the construct');
+    this.initPhysics();
+
     this.$container = $container;
-    this.scene = new THREE.Scene();
+    this.scene = new Physijs.Scene();
 
     this.cssScene = new THREE.Scene();
     this.objectSelector = new ObjectSelector('#editor');
@@ -34,6 +36,7 @@ class Construct {
     this.initWebVR();
     this.initEvents();
     this.initEditor();
+
 
 
     this.$container.append(this.glRenderer.domElement);
@@ -191,7 +194,8 @@ class Construct {
     try {
       var initializeProgram = eval(program.initialize);
 
-      var programRenderedObjects = initializeProgram(program);
+      var programRenderedObjects = initializeProgram(
+        program, self.scene.children);
 
       _.each(programRenderedObjects, (renderedObject) => {
         renderedObject.programId = program._id;
@@ -352,6 +356,11 @@ class Construct {
       this.camera.updateProjectionMatrix();
       this.vrEffect.setSize( window.innerWidth, window.innerHeight );
     }, false);
+  }
+
+  initPhysics() {
+    Physijs.scripts.worker = 'physijs_worker.js';
+    Physijs.scripts.ammo = 'ammo.js';
   }
 
   render() {
