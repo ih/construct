@@ -16,6 +16,7 @@ class Construct {
 
     this.$container = $container;
     this.scene = new Physijs.Scene();
+    this.scene.setGravity(new THREE.Vector3(0, -10, 0));
 
     this.cssScene = new THREE.Scene();
     this.objectSelector = new ObjectSelector('#editor');
@@ -372,6 +373,7 @@ class Construct {
     //    this.glRenderer.render(this.scene, this.camera);
     //    this.cssRenderer.render(this.cssScene, this.camera);
     this.vrEffect.render(this.scene, this.camera);
+    this.scene.simulate();
   }
 
   update() {
