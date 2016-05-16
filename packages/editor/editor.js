@@ -97,7 +97,10 @@ Editor = class Editor {
   }
 
   setValue(text) {
+    var cursorPosition = this.editor.getCursorPosition();
     this.editor.setValue(text);
+    this.editor.moveCursorToPosition(cursorPosition);
+    this.editor.clearSelection();
   }
 
   loadProgram(program) {
@@ -115,6 +118,13 @@ Editor = class Editor {
     this.currentSection = this.INITIALIZE;
     var code = this.initializeFunction.get();
     Tracker.nonreactive(() => {this.setValue(code, -1);});
+  }
+
+  updateInitializationCode(newCode) {
+    this.initializeFunction.set(newCode);
+    if (this.currentSection === this.INITIALIZE) {
+      this.setValue(newCode);
+    }
   }
 
   showUpdateCode() {
