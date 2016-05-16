@@ -127,6 +127,13 @@ Editor = class Editor {
     }
   }
 
+  updateUpdateCode(newCode) {
+    this.updateFunction.set(newCode);
+    if (this.currentSection === this.UPDATE) {
+      this.setValue(newCode);
+    }
+  }
+
   showUpdateCode() {
     this.currentSection = this.UPDATE;
     Tracker.nonreactive(() => {this.setValue(this.updateFunction.get(), -1);});

@@ -181,6 +181,9 @@ class Construct {
             updatedProgram.update !== originalProgram.update) {
           self.removeRenderedObjects(updatedProgram._id);
           self.initProgram(updatedProgram._id);
+          if (self.editor.isActive.get()) {
+            self.editor.updateInitializationCode(updatedProgram.initialize);
+          }
         }
       },
       removed: (oldProgram) => {
