@@ -55,6 +55,9 @@ Editor = class Editor {
     $('.delete-program')[0].addEventListener('click', () => {
       self.deleteProgram();
     });
+    $('.copy-program')[0].addEventListener('click', () => {
+      self.copyProgram();
+    });
     $(self.programNameSelector)[0].addEventListener('change', (event) => {
       var newName = $(event.currentTarget).val();
       self.programName.set(newName);
@@ -157,6 +160,11 @@ Editor = class Editor {
       console.log(JSON.stringify(error));
     });
     this.clear();
+  }
+
+  copyProgram() {
+    var program = Programs.findOne(this.programId);
+    console.log(program);
   }
 
   clear() {
