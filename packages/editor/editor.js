@@ -172,13 +172,19 @@ Editor = class Editor {
     delete programCopy._id;
     programCopy.position = Programs.findOne(this.userProgramId).position;
     programCopy.contributors = [Meteor.user().username];
+    var ancestryData = {
+      id: program._id,
+      name: program.name,
+      contributors: program.contributors
+    };
     if (programCopy.ancestry) {
-      programCopy.ancestry.push({id: program._id, name: program.name});
+      programCopy.ancestry.push(ancestryData);
     } else {
-      programCopy.ancestry = {id: program._id, name: program.name};
+      programCopy.ancestry = [ancestryData];
     }
     programCopy.name = `Copy of ${program.name || program._id}`;
-    Programs.insert(programCopy);
+    programCopy._id = Programs.insert(programCopy);
+    this.loadProgram(programCopy);
   }
 
   clear() {
