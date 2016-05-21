@@ -7,7 +7,10 @@
 var Programs;
 
 Editor = class Editor {
-  constructor(editorSelector, ProgramsCollection) {
+  // userProgramId is only used for copyProgram to get the user position
+  // can we get rid of it? or maybe user program should be more universally
+  // accessible?
+  constructor(editorSelector, ProgramsCollection, userProgramId) {
     Programs = ProgramsCollection;
 
     var self = this;
@@ -18,6 +21,7 @@ Editor = class Editor {
     self.editorSelector = editorSelector;
     self.isLoaded = false;
     self.programId = null;
+    self.userProgramId = userProgramId;
     self.initializeFunction = new ReactiveVar(null);
     self.updateFunction = new ReactiveVar(null);
     self.programName = new ReactiveVar(null);
@@ -54,6 +58,9 @@ Editor = class Editor {
     });
     $('.delete-program')[0].addEventListener('click', () => {
       self.deleteProgram();
+    });
+    $('.copy-program')[0].addEventListener('click', () => {
+      self.copyProgram();
     });
     $(self.programNameSelector)[0].addEventListener('change', (event) => {
       var newName = $(event.currentTarget).val();
@@ -157,6 +164,27 @@ Editor = class Editor {
       console.log(JSON.stringify(error));
     });
     this.clear();
+  }
+
+  copyProgram() {
+    var program = Programs.findOne(this.programId);
+    var programCopy = $.extend(true, {}, program);
+    delete programCopy._id;
+    programCopy.position = Programs.findOne(this.userProgramId).position;
+    programCopy.contributors = [Meteor.user().username];
+    var ancestryData = {
+      id: program._id,
+      name: program.name,
+      contributors: program.contributors
+    };
+    if (programCopy.ancestry) {
+      programCopy.ancestry.push(ancestryData);
+    } else {
+      programCopy.ancestry = [ancestryData];
+    }
+    programCopy.name = `Copy of ${program.name || program._id}`;
+    programCopy._id = Programs.insert(programCopy);
+    this.loadProgram(programCopy);
   }
 
   clear() {

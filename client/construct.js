@@ -48,7 +48,7 @@ class Construct {
   initEditor() {
     // this.editor = new Editor();
     var self = this;
-    self.editor = new Editor('#editor', Programs);
+    self.editor = new Editor('#editor', Programs, this.userProgramId);
 
     function failedSave(error) {
       //console.log('did not save, reverting program');
