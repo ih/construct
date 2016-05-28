@@ -104,7 +104,7 @@ class Construct {
               initialize: initializeFunction
             }}, failedSave);
           } catch (error) {
-            console.log('problem evaluating change, not saving');
+            console.log('problem evaluating change, not saving: ${error.message}');
           }
         }
       } else if (self.editor.currentSection === self.editor.UPDATE) {
