@@ -27,6 +27,7 @@ Meteor.startup(function () {
         y: 100,
         z: -100
       },
+      man: 'This is the man page.  You can put information here that tells what the program is about and how to use it.',
       initialize:
       `
 (self) => {
@@ -76,6 +77,7 @@ Accounts.onCreateUser(function(options, user) {
       y: 5,
       z: 0
     },
+    man: 'Your program\'s manual!  Add help info here',
     color: Utility.randomColor(),
     contributors: [user.username],
     initialize:

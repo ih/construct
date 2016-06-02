@@ -96,7 +96,7 @@ class Construct {
       var updateFunction = self.editor.updateFunction.get();
       var programAttributes = self.editor.programAttributes.get();
       if (self.editor.currentSection === self.editor.INITIALIZE) {
-        console.log('updating the init function');
+        // console.log('updating the init function');
         if (initializeFunction) {
           try {
             eval(initializeFunction);
@@ -199,7 +199,7 @@ class Construct {
       var initializeProgram = eval(program.initialize);
 
       var programRenderedObjects = initializeProgram(
-        program, self.scene.children);
+        program, self.renderedObjects);
 
       _.each(programRenderedObjects, (renderedObject) => {
         renderedObject.programId = program._id;
@@ -412,8 +412,13 @@ class Construct {
     Programs.find().forEach((program) => {
       // this doesn't need to happen each update
       try {
-        var updateProgram = self.renderedObjects[program._id].updateProgram;
-        var updatedFields = updateProgram(self.renderedObjects[program._id], program);
+        var renderedObjects = self.renderedObjects[program._id];
+        if (!renderedObjects) {
+          return;
+        }
+        var updateProgram = renderedObjects.updateProgram;
+        var updatedFields = updateProgram(
+          self.renderedObjects[program._id], program, self.renderedObjects);
         if (updatedFields) {
           Programs.update({_id: program._id}, {$set: updatedFields});
         }
@@ -434,6 +439,7 @@ class Construct {
         y: newProgramPosition.y,
         z: newProgramPosition.z
       },
+      man: 'Your program\'s manual!  Add help info here',
       contributors: [Meteor.user().username],
       initialize:
       `

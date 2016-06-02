@@ -71,7 +71,7 @@ Editor = class Editor {
         return;
       }
       if (self.currentSection === self.INITIALIZE) {
-        console.log('inside the change handler ' + self.programId);
+        // console.log('inside the change handler ' + self.programId);
         self.initializeFunction.set(self.editor.getSession().getValue());
       } else if (self.currentSection === self.UPDATE) {
         self.updateFunction.set(self.editor.getSession().getValue());
