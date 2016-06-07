@@ -28,3 +28,4 @@ reactive-var
 twbs:bootstrap
 standard-minifier-css
 standard-minifier-js
+percolate:migrations

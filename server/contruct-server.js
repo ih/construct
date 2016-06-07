@@ -1,4 +1,14 @@
-var Programs = new Mongo.Collection('programs');
+Programs = new Mongo.Collection('programs');
+
+Migrations.add({
+  version: 1,
+  up: function() {
+    Programs.find().forEach(function (program) {
+      console.log(program);
+      Programs.update(program._id, {$set: {man: 'Your program\'s manual!  Add help info here'}});
+    });
+  }
+});
 
 Programs.allow({
   insert: function (userId, doc) {
@@ -19,6 +29,7 @@ Meteor.publish('all-programs', function () {
 });
 
 Meteor.startup(function () {
+  Migrations.migrateTo('1,rerun');
   if (Programs.find().count() === 0) {
     console.log('adding init program');
     Programs.insert({
