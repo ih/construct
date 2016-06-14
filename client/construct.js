@@ -104,7 +104,7 @@ class Construct {
               initialize: initializeFunction
             }}, failedSave);
           } catch (error) {
-            console.log('problem evaluating change, not saving: ${error.message}');
+            console.log(`problem evaluating change, not saving: ${error.message}`);
           }
         }
       } else if (self.editor.currentSection === self.editor.UPDATE) {
@@ -440,6 +440,7 @@ class Construct {
         z: newProgramPosition.z
       },
       man: 'Your program\'s manual!  Add help info here',
+      name: Meteor.user().username + ':' + (new Date()),
       contributors: [Meteor.user().username],
       initialize:
       `

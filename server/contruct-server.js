@@ -1,4 +1,5 @@
 Programs = new Mongo.Collection('programs');
+Programs._collection._ensureIndex({name: 1}, {unique: true});
 
 Migrations.add({
   version: 1,
@@ -38,6 +39,7 @@ Meteor.startup(function () {
         y: 100,
         z: -100
       },
+      name: 'Sample Program',
       man: 'This is the man page.  You can put information here that tells what the program is about and how to use it.',
       initialize:
       `
