@@ -1,15 +1,33 @@
 Programs = new Mongo.Collection('programs');
-Programs._collection._ensureIndex({name: 1}, {unique: true});
+//Programs._collection._ensureIndex({name: 1}, {unique: true});
 
+// add man property to programs
 Migrations.add({
   version: 1,
   up: function() {
     Programs.find().forEach(function (program) {
-      console.log(program);
+      console.log('migration for adding man field to programs');
       Programs.update(program._id, {$set: {man: 'Your program\'s manual!  Add help info here'}});
     });
   }
 });
+
+// make names unique
+Migrations.add({
+  version: 2,
+  up: function() {
+    var names = {};
+    Programs.find().forEach(function (program) {
+      console.log('migration for making names unique');
+      if (names[program.name]) {
+        Programs.update(program._id, {$set: {name: Math.random()*10}});
+      } else {
+        names[program.name] = true;
+      }
+    });
+  }
+});
+
 
 Programs.allow({
   insert: function (userId, doc) {
@@ -30,7 +48,7 @@ Meteor.publish('all-programs', function () {
 });
 
 Meteor.startup(function () {
-  Migrations.migrateTo('1,rerun');
+  Migrations.migrateTo('latest');
   if (Programs.find().count() === 0) {
     console.log('adding init program');
     Programs.insert({
