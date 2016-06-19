@@ -439,7 +439,7 @@ class Construct {
         y: newProgramPosition.y,
         z: newProgramPosition.z
       },
-      man: 'Your program\'s manual!  Add help info here',
+      man: `Your program's manual!  Add help info here`,
       name: Meteor.user().username + ':' + (new Date()),
       contributors: [Meteor.user().username],
       initialize:
@@ -457,6 +457,29 @@ class Construct {
       `
 (renderedObjects, self) => {
   var sphere = renderedObjects['placeholder'];
+}
+      `
+    });
+  }
+
+  createModule() {
+    var newModuleId = Programs.insert({
+      man: `This is a module, add a description of it's functionality here.`,
+      type: 'module',
+      name: `${Meteor.user().username}:module:${new Date()}`,
+      imports: [],
+      exports: [],
+      code: 'Define variables, functions, classes...',
+      // TODO move this to the server
+      initialize:
+      `
+(self) => {
+  var geometry = new THREE.DodecahedronGeometry();
+  var material = new THREE.MeshNormalMaterial();
+  var position = Programs.findOne(this.userProgramId).position;
+  var module = new THREE.Mesh(geometry, material);
+  module.position.set(position.x + 10, position.y, position.z);
+  return {placeholder: module};
 }
       `
     });
@@ -547,5 +570,8 @@ Template.hud.events({
   },
   'click .create-program': () => {
     construct.createProgram();
+  },
+  'click .create-module': () => {
+    construct.createModule();
   }
 });
