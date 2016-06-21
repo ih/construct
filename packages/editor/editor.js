@@ -26,6 +26,7 @@ Editor = class Editor {
     self.updateFunction = new ReactiveVar(null);
     self.programName = new ReactiveVar(null);
     self.programAttributes = new ReactiveVar(null);
+    self.programType = new ReactiveVar(null);
     self.currentSection = self.INITIALIZE;
     self.programSelectorSelector = '.program-selector';
     self.programNameSelector = '.program-name-field';
@@ -47,12 +48,6 @@ Editor = class Editor {
 
   initializeEvents() {
     var self = this;
-    $('.initialization-code')[0].addEventListener('click', () => {
-      self.showInitializationCode();
-    });
-    $('.update-code')[0].addEventListener('click', () => {
-      self.showUpdateCode();
-    });
     $('.show-attributes')[0].addEventListener('click', () => {
       self.showAttributes();
     });
@@ -113,6 +108,7 @@ Editor = class Editor {
   loadProgram(program) {
     //console.log('loading program into editor:' + JSON.stringify(program));
     this.programId = program._id;
+    this.programType.set(program);
     this.initializeFunction.set(program.initialize);
     this.updateFunction.set(program.update);
     this.showInitializationCode();

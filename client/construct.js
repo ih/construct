@@ -38,8 +38,6 @@ class Construct {
     this.initEvents();
     this.initEditor();
 
-
-
     this.$container.append(this.glRenderer.domElement);
     //this.cssRenderer.domElement.appendChild(this.glRenderer.domElement);
     Session.set('constructReady', true);
@@ -470,6 +468,7 @@ class Construct {
       imports: [],
       exports: [],
       code: 'Define variables, functions, classes...',
+      contributors: [Meteor.user().username],
       // TODO move this to the server
       initialize:
       `
@@ -480,6 +479,12 @@ class Construct {
   var module = new THREE.Mesh(geometry, material);
   module.position.set(position.x + 10, position.y, position.z);
   return {placeholder: module};
+}
+      `,
+      update:
+      `
+(renderedObjects, self) => {
+
 }
       `
     });
@@ -573,5 +578,25 @@ Template.hud.events({
   },
   'click .create-module': () => {
     construct.createModule();
+  }
+});
+
+
+// this is here to get access to the instantiated editor object
+// ideally it'd be in the editor module
+
+Template.editor.events({
+  'click .initialization-code': () => {
+    construct.editor.showInitializationCode();
+  },
+  'click .update-code': () => {
+    construct.editor.showUpdateCode();
+  }
+});
+
+Template.editor.helpers({
+  isModule: () => {
+    // need to rerun this AFTER editor is created...
+    return construct && construct.editor && construct.editor.get() === 'module';
   }
 });

@@ -1,7 +1,12 @@
 <template name="editor">
   <div id="editor">
-    <button class="initialization-code btn btn-primary">Initialize</button>
-    <button class="update-code btn btn-secondary">Update</button>
+    {{#if isModule}}
+        <button class="initialization-code btn btn-primary">Initialize</button>
+        <button class="update-code btn btn-secondary">Update</button>
+    {{else}}
+        <button class="exports btn btn-primary">Exports</button>
+    {{/if}}
+    <button class="imports btn btn-primary">Imports</button>
     <button class="show-attributes btn btn-success">Attributes</button>
     <button class="delete-program btn btn-danger">Delete</button>
     <button class="copy-program btn btn-info">Copy</button>
