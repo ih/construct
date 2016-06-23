@@ -1,10 +1,10 @@
 <template name="editor">
   <div id="editor">
     {{#if isModule}}
+        <button class="exports btn btn-primary">Exports</button>
+    {{else}}
         <button class="initialization-code btn btn-primary">Initialize</button>
         <button class="update-code btn btn-secondary">Update</button>
-    {{else}}
-        <button class="exports btn btn-primary">Exports</button>
     {{/if}}
     <button class="imports btn btn-primary">Imports</button>
     <button class="show-attributes btn btn-success">Attributes</button>

@@ -597,6 +597,8 @@ Template.editor.events({
 Template.editor.helpers({
   isModule: () => {
     // need to rerun this AFTER editor is created...
-    return construct && construct.editor && construct.editor.get() === 'module';
+    if(Session.get('constructReady')) {
+      return construct && construct.editor && construct.editor.programType.get() === 'module';
+    }
   }
 });

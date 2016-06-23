@@ -108,7 +108,7 @@ Editor = class Editor {
   loadProgram(program) {
     //console.log('loading program into editor:' + JSON.stringify(program));
     this.programId = program._id;
-    this.programType.set(program);
+    this.programType.set(program.type);
     this.initializeFunction.set(program.initialize);
     this.updateFunction.set(program.update);
     this.showInitializationCode();
