@@ -17,6 +17,9 @@ Editor = class Editor {
     self.INITIALIZE = 0;
     self.UPDATE = 1;
     self.ATTRIBUTES = 2;
+    self.IMPORTS = 3;
+    self.EXPORTS = 4;
+    self.MODULE_CODE = 5;
     self.isActive = new ReactiveVar(false);
     self.editorSelector = editorSelector;
     self.isLoaded = false;
@@ -24,6 +27,9 @@ Editor = class Editor {
     self.userProgramId = userProgramId;
     self.initializeFunction = new ReactiveVar(null);
     self.updateFunction = new ReactiveVar(null);
+    self.moduleCode = new ReactiveVar(null);
+    self.imports = new ReactiveVar(null);
+    self.exports = new ReactiveVar(null);
     self.programName = new ReactiveVar(null);
     self.programAttributes = new ReactiveVar(null);
     self.programType = new ReactiveVar(null);
@@ -48,15 +54,6 @@ Editor = class Editor {
 
   initializeEvents() {
     var self = this;
-    $('.show-attributes')[0].addEventListener('click', () => {
-      self.showAttributes();
-    });
-    $('.delete-program')[0].addEventListener('click', () => {
-      self.deleteProgram();
-    });
-    $('.copy-program')[0].addEventListener('click', () => {
-      self.copyProgram();
-    });
     $(self.programNameSelector)[0].addEventListener('change', (event) => {
       var newName = $(event.currentTarget).val();
       self.programName.set(newName);
@@ -107,6 +104,7 @@ Editor = class Editor {
 
   loadProgram(program) {
     //console.log('loading program into editor:' + JSON.stringify(program));
+    this.program = program;
     this.programId = program._id;
     this.programType.set(program.type);
     this.initializeFunction.set(program.initialize);
@@ -120,7 +118,9 @@ Editor = class Editor {
     console.log('showing init code ' + this);
     this.currentSection = this.INITIALIZE;
     var code = this.initializeFunction.get();
-    Tracker.nonreactive(() => {this.setValue(code, -1);});
+    Tracker.nonreactive(() => {
+      this.setValue(code, -1);
+    });
   }
 
   updateInitializationCode(newCode) {

@@ -591,6 +591,15 @@ Template.editor.events({
   },
   'click .update-code': () => {
     construct.editor.showUpdateCode();
+  },
+  'click .show-attributes': () => {
+    construct.editor.showAttributes();
+  },
+  'click .delete-attributes': () => {
+    construct.editor.deleteProgram();
+  },
+  'click .copy-program': () => {
+    construct.editor.copyProgram();
   }
 });
 
