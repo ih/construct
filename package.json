@@ -1,0 +1,23 @@
+{
+  "name": "construct",
+  "version": "1.0.0",
+  "description": "The Construct Club is a WebVR enabled site that allows multiple users to connect and write programs that create the objects in the world.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ih/construct.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ih/construct/issues"
+  },
+  "homepage": "https://github.com/ih/construct#readme",
+  "dependencies": {
+    "react": "^15.2.0",
+    "react-dom": "^15.2.0"
+  }
+}
