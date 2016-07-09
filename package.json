@@ -17,7 +17,8 @@
   },
   "homepage": "https://github.com/ih/construct#readme",
   "dependencies": {
-    "react": "^15.2.0",
-    "react-dom": "^15.2.0"
+    "react": "^15.2.1",
+    "react-addons-pure-render-mixin": "^15.2.1",
+    "react-dom": "^15.2.1"
   }
 }
