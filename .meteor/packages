@@ -21,7 +21,6 @@ ecmascript
 accounts-ui
 accounts-password
 irvin:utility
-irvin:editor
 arch:ace-editor
 irvin:object-selector
 reactive-var

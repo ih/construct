@@ -1,3 +1,5 @@
+import Editor from '../imports/editor.js';
+
 var Programs = new Mongo.Collection('programs');
 // https://github.com/josdirksen/learning-threejs/blob/master/chapter-09/07-first-person-camera.html
 
@@ -44,6 +46,11 @@ class Construct {
   }
 
   initEditor() {
+    var self = this;
+    self.editor = new Editor('#editor', Programs);
+  }
+
+  initEditorOld() {
     // this.editor = new Editor();
     var self = this;
     self.editor = new Editor('#editor', Programs, this.userProgramId);
