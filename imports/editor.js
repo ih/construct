@@ -8,8 +8,15 @@ export default class Editor {
 
     self.editorSelector = editorSelector;
 
+    self.INITIALIZE = 'initialize';
+    self.UPDATE = 'update';
+    self.CODE_ATTRIBUTES = [self.INITIALIZE, self.UPDATE];
+    self.ATTRIBUTES = 'attributes';
+
     self.isActive = new ReactiveVar(false);
     self.isLoaded = false;
+    self.program = new ReactiveVar(undefined);
+    self.activeSection = new ReactiveVar(self.INITIALIZE);
 
     AceEditor.instance('ace-editor', {
       theme: 'dawn',
@@ -20,11 +27,30 @@ export default class Editor {
       self.editor.session.setOptions({
         tabSize: 2
       });
-      self.setValue(self.defaultText());
+      self.updateDisplay();
     });
     $(this.editorSelector).hide();
 
     console.log('hey editor');
+  }
+
+  // reactively reset the text displayed in the editor any time the program or
+  // active section changes
+  updateDisplay() {
+    var self = this;
+    Tracker.autorun(() => {
+      var program = self.program.get();
+      var activeSection = self.activeSection.get();
+      if (program === undefined) {
+        self.setValue(self.defaultText());
+      } else if (activeSection === self.ATTRIBUTES) {
+        var attributes = _.omit(program, self.CODE_ATTRIBUTES);
+        self.setValue(JSON.stringify(attributes, null, 2));
+      } else {
+        self.setValue(program[activeSection]);
+      }
+    });
+
   }
 
   activate() {
@@ -35,6 +61,10 @@ export default class Editor {
   deactivate() {
     $(this.editorSelector).hide();
     this.isActive.set(false);
+  }
+
+  setProgram(program) {
+    this.program.set(program);
   }
 
   setValue(text) {

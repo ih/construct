@@ -63,7 +63,11 @@
     <button class="show-attributes btn btn-success">Attributes</button>
     <button class="delete-program btn btn-danger">Delete</button>
     <button class="copy-program btn btn-info">Copy</button>
-    <select class="program-selector"></select>
+    <select class="program-selector">
+      {{#each programs}}
+        <option value="{{_id}}">{{name}}</option>
+      {{/each}}
+    </select>
     <input type="text" class="program-name-field">
     <div id="ace-editor">
     </div>

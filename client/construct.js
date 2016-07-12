@@ -598,6 +598,11 @@ Template.editor.events({
   },
   'click .update-code': () => {
     construct.editor.showUpdateCode();
+  },
+  'change .program-selector': (event) => {
+    var programId = event.target.value;
+    var program = Programs.findOne(programId);
+    construct.editor.setProgram(program);
   }
 });
 
@@ -605,7 +610,10 @@ Template.editor.helpers({
   isModule: () => {
     // need to rerun this AFTER editor is created...
     if(Session.get('constructReady')) {
-      return construct && construct.editor && construct.editor.programType.get() === 'module';
+      //      return construct && construct.editor && construct.editor.program construct.editor.programType.get() === 'module';
     }
+  },
+  programs: () => {
+    return Programs.find({});
   }
 });
