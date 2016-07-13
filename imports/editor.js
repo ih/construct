@@ -34,6 +34,10 @@ export default class Editor {
     console.log('hey editor');
   }
 
+  setActiveSection(sectionName) {
+    this.activeSection.set(sectionName);
+  }
+
   // reactively reset the text displayed in the editor any time the program or
   // active section changes
   updateDisplay() {

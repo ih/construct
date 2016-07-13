@@ -594,10 +594,13 @@ Template.hud.events({
 
 Template.editor.events({
   'click .initialization-code': () => {
-    construct.editor.showInitializationCode();
+    construct.editor.setActiveSection(construct.editor.INITIALIZE);
   },
   'click .update-code': () => {
-    construct.editor.showUpdateCode();
+    construct.editor.setActiveSection(construct.editor.UPDATE);
+  },
+  'click .attributes': () => {
+    construct.editor.setActiveSection(construct.editor.ATTRIBUTES);
   },
   'change .program-selector': (event) => {
     var programId = event.target.value;
