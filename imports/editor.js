@@ -27,6 +27,19 @@ export default class Editor {
       self.editor.session.setOptions({
         tabSize: 2
       });
+
+      self.editor.getSession().on('change', _.debounce(() => {
+        if (self.program.get()) {
+          var updateFields = {};
+          updateFields[self.activeSection.get()] = self.editor.getSession().getValue();
+          Programs.update({
+            _id: self.program.get()._id
+          }, {
+            $set: updateFields
+          });
+        }
+      }, 300));
+
       self.updateDisplay();
     });
     $(this.editorSelector).hide();
