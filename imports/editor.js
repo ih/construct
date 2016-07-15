@@ -29,11 +29,18 @@ export default class Editor {
       });
 
       self.editor.getSession().on('change', _.debounce(() => {
-        if (self.program.get()) {
+        var program = self.program.get();
+        var activeSection = self.activeSection.get();
+        var newProgramValue = self.editor.getSession().getValue();
+        if (program) {
           var updateFields = {};
-          updateFields[self.activeSection.get()] = self.editor.getSession().getValue();
+          if (activeSection === self.ATTRIBUTES) {
+            updateFields = _.omit(JSON.parse(newProgramValue), '_id');
+          } else {
+            updateFields[activeSection] = newProgramValue;
+          }
           Programs.update({
-            _id: self.program.get()._id
+            _id: program._id
           }, {
             $set: updateFields
           });

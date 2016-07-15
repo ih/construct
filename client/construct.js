@@ -182,14 +182,11 @@ class Construct {
         self.initProgram(program._id);
       },
       changed: (updatedProgram, originalProgram) => {
-        if (updatedProgram.initialize !== originalProgram.initialize ||
-            updatedProgram.update !== originalProgram.update) {
           self.removeRenderedObjects(updatedProgram._id);
           self.initProgram(updatedProgram._id);
           if (self.editor.isActive.get()) {
             self.editor.setProgram(updatedProgram);
           }
-        }
       },
       removed: (oldProgram) => {
         self.removeRenderedObjects(oldProgram._id);
