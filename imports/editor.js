@@ -91,6 +91,20 @@ export default class Editor {
     this.program.set(program);
   }
 
+  deleteProgram() {
+    Programs.remove(this.program.get()._id, (error) => {
+      console.log(JSON.stringify(error));
+    });
+    this.clear();
+  }
+
+  clear() {
+    // change visible parts of the editor
+    this.setValue(this.defaultText());
+    this.program.set(undefined);
+  }
+
+
   setValue(text) {
     var cursorPosition = this.editor.getCursorPosition();
     this.editor.setValue(text);

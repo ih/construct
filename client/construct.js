@@ -603,6 +603,9 @@ Template.editor.events({
     var programId = event.target.value;
     var program = Programs.findOne(programId);
     construct.editor.setProgram(program);
+  },
+  'click .delete-program': () => {
+    construct.editor.deleteProgram();
   }
 });
 
