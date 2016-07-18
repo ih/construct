@@ -606,6 +606,10 @@ Template.editor.events({
   },
   'click .delete-program': () => {
     construct.editor.deleteProgram();
+  },
+  'click .copy-program': () => {
+    construct.editor.copyProgram(
+      Programs.findOne(construct.userProgramId).position);
   }
 });
 

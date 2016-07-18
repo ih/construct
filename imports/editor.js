@@ -8,10 +8,15 @@ export default class Editor {
 
     self.editorSelector = editorSelector;
 
+    // move these constants to a Program module or use a schema
     self.INITIALIZE = 'initialize';
     self.UPDATE = 'update';
     self.CODE_ATTRIBUTES = [self.INITIALIZE, self.UPDATE];
     self.ATTRIBUTES = 'attributes';
+    // used to determine what can be thrown away
+    self.REQUIRED_PROPERTIES = _.union(
+      self.CODE_ATTRIBUTES, [
+        'position', 'contributors', 'man', 'name', 'ancestry']);
 
     self.isActive = new ReactiveVar(false);
     self.isLoaded = false;
@@ -34,16 +39,31 @@ export default class Editor {
         var newProgramValue = self.editor.getSession().getValue();
         if (program) {
           var updateFields = {};
+          // dictionary passed to Programs.update
+          // defined here so that we can conditionally set $unset field
+          var updateObject = {};
           if (activeSection === self.ATTRIBUTES) {
+            var removeFields = {};
             updateFields = _.omit(JSON.parse(newProgramValue), '_id');
+            var fieldNamesToRemove = _.difference(
+              _.keys(_.omit(program, '_id')), _.keys(updateFields));
+            fieldNamesToRemove = _.difference(
+              fieldNamesToRemove, self.REQUIRED_PROPERTIES);
+            if (!_.isEmpty(fieldNamesToRemove)) {
+              _.each(fieldNamesToRemove, (fieldName) => {
+                removeFields[fieldName] = "";
+              });
+              updateObject['$unset'] = removeFields;
+            }
           } else {
             updateFields[activeSection] = newProgramValue;
           }
+
+          updateObject['$set'] = updateFields;
+
           Programs.update({
             _id: program._id
-          }, {
-            $set: updateFields
-          });
+          }, updateObject);
         }
       }, 300));
 
@@ -96,6 +116,27 @@ export default class Editor {
       console.log(JSON.stringify(error));
     });
     this.clear();
+  }
+
+  copyProgram(newPosition) {
+    var program = this.program.get();
+    var programCopy = $.extend(true, {}, program);
+    delete programCopy._id;
+    programCopy.position = newPosition;
+    programCopy.contributors = [Meteor.user().username];
+    var ancestryData = {
+      id: program._id,
+      name: program.name,
+      contributors: program.contributors
+    };
+    if (programCopy.ancestry) {
+      programCopy.ancestry.push(ancestryData);
+    } else {
+      programCopy.ancestry = [ancestryData];
+    }
+    programCopy.name = `Copy of ${program.name || program._id} at ${new Date()}`;
+    programCopy._id = Programs.insert(programCopy);
+    this.setProgram(programCopy);
   }
 
   clear() {
