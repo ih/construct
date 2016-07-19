@@ -48,6 +48,7 @@ class Construct {
   initEditor() {
     var self = this;
     self.editor = new Editor('#editor', Programs);
+    Session.set('editorReady', true);
   }
 
   initEditorOld() {
@@ -610,13 +611,17 @@ Template.editor.events({
   'click .copy-program': () => {
     construct.editor.copyProgram(
       Programs.findOne(construct.userProgramId).position);
-  }
+  },
+  'change .program-name-field': _.debounce((event) => {
+    var newName = event.target.value;
+    construct.editor.setName(newName);
+  }, 300)
 });
 
 Template.editor.helpers({
   isModule: () => {
     // need to rerun this AFTER editor is created...
-    if(Session.get('constructReady')) {
+    if(Session.get('editorReady')) {
       //      return construct && construct.editor && construct.editor.program construct.editor.programType.get() === 'module';
     }
   },
