@@ -67,118 +67,6 @@ class Construct {
 
   }
 
-  initEditorOld() {
-    // this.editor = new Editor();
-    var self = this;
-    self.editor = new Editor('#editor', Programs, this.userProgramId);
-
-    function failedSave(error) {
-      //console.log('did not save, reverting program');
-      //self.editor.loadProgram(self.editor.programId);
-    }
-    // if an object is selected load its code into the editor
-    Tracker.autorun(() => {
-      console.log('object selection changed!');
-      if (self.objectSelector.selectedObject.get() && self.editor.isLoaded) {
-        var selectedProgramId = self.objectSelector.selectedObject.get().programId;
-        var selectedProgram = Tracker.nonreactive(() => {
-          return Programs.findOne(selectedProgramId);
-        });
-        Tracker.nonreactive(() => {
-          self.editor.setProgram(selectedProgram);
-        });
-      } else if (self.editor.isLoaded) {
-        self.editor.clear();
-      }
-    }, () => {console.log('problem in the autorun'); });
-
-    // keep the selection menu updated
-    Tracker.autorun(() => {
-      var allProgramsCursor = Programs.find({}, {fields: {_id: 1, name: 1}});
-      self.editor.updateProgramSelector(allProgramsCursor);
-    });
-
-    // if program name is edited update the program object
-    Tracker.autorun(() => {
-      var programName = self.editor.programName.get();
-      console.log('updating the program name');
-      if (!self.editor.programId) {
-        console.log('need to select a program before changing the name');
-        return null;
-      }
-      Programs.update({_id: self.editor.programId}, {$set: {
-        name: programName
-      }}, failedSave);
-      return true;
-    });
-    // if init code is edited update the program object
-    Tracker.autorun(() => {
-
-      var initializeFunction = self.editor.initializeFunction.get();
-      var updateFunction = self.editor.updateFunction.get();
-      var programAttributes = self.editor.programAttributes.get();
-      if (self.editor.currentSection === self.editor.INITIALIZE) {
-        // console.log('updating the init function');
-        if (initializeFunction) {
-          try {
-            eval(initializeFunction);
-            Programs.update({_id: self.editor.programId}, {$set: {
-              initialize: initializeFunction
-            }}, failedSave);
-          } catch (error) {
-            console.log(`problem evaluating change, not saving: ${error.message}`);
-          }
-        }
-      } else if (self.editor.currentSection === self.editor.UPDATE) {
-
-        if (updateFunction) {
-          try {
-            eval(updateFunction);
-            Programs.update({_id: self.editor.programId}, {$set: {
-              update: updateFunction
-            }}, failedSave);
-          } catch (error) {
-            console.log('problem evaluating change, not saving');
-          }
-        }
-      } else if (self.editor.currentSection === self.editor.ATTRIBUTES) {
-        if (programAttributes) {
-          try {
-            programAttributes = _.omit(JSON.parse(programAttributes), '_id');
-            Programs.update({_id: self.editor.programId}, {$set: programAttributes});
-          } catch (error) {
-            console.log('problem parsing attributes, not saving');
-          }
-
-        }
-      }
-    });
-
-    // initialize program selector
-    $(self.editor.programSelectorSelector).change((event) => {
-      console.log(event);
-      var selectedValue = $(self.editor.programSelectorSelector).val();
-      var selectedProgramObject = _.values(_.omit(
-        self.renderedObjects[selectedValue], 'updateProgram'))[0];
-      console.log('the value selected');
-      console.log(selectedValue);
-      if (selectedValue === 'None') {
-        self.editor.clear();
-      }
-      else if (selectedProgramObject) {
-        // use the object selector which will trigger the program to load
-        self.objectSelector.selectObject(selectedProgramObject);
-      } else {
-        console.log('problem finding rendered objects for ' + selectedValue +
-                    ' loading directly');
-        var selectedProgram = Programs.findOne(selectedValue);
-        self.editor.loadProgram(selectedProgram);
-      }
-    });
-
-
-  }
-
   removeRenderedObjects(programId) {
     var self = this;
     _.each(self.renderedObjects[programId], (renderedObject) => {
@@ -387,7 +275,7 @@ class Construct {
   }
 
   render() {
-    if (this.controls && !this.controls.enabled && this.editor && this.editor.isActive.get()) {
+    if (this.controls && !this.controls.enabled && Session.get('editorReady') && this.editor.isActive.get()) {
       this.objectSelector.selectObjects(this.scene, this.camera);
     }
 
@@ -645,7 +533,7 @@ Template.editor.helpers({
     }
   },
   programs: () => {
-    var programs = Programs.find({}).map((program) => {
+    var programs = Programs.find({}, {fields: {_id: 1, name: 1}}).map((program) => {
       if (Session.get('editorReady') && construct.editor.program.get() && construct.editor.program.get()._id === program._id) {
         program.selected = 'selected';
       }
