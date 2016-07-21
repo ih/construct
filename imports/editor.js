@@ -153,6 +153,14 @@ export default class Editor {
     this.editor.clearSelection();
   }
 
+  toggle() {
+    if (this.isActive.get()) {
+      this.deactivate();
+    } else {
+      this.activate();
+    }
+  }
+
   defaultText() {
     return `
 Click on an object or select one from the drop down menu to see it's source code.
