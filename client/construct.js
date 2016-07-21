@@ -1,3 +1,5 @@
+import Editor from '../imports/editor.js';
+
 var Programs = new Mongo.Collection('programs');
 // https://github.com/josdirksen/learning-threejs/blob/master/chapter-09/07-first-person-camera.html
 
@@ -38,23 +40,16 @@ class Construct {
     this.initEvents();
     this.initEditor();
 
-
-
     this.$container.append(this.glRenderer.domElement);
     //this.cssRenderer.domElement.appendChild(this.glRenderer.domElement);
     Session.set('constructReady', true);
   }
 
   initEditor() {
-    // this.editor = new Editor();
     var self = this;
-    self.editor = new Editor('#editor', Programs, this.userProgramId);
+    self.editor = new Editor('#editor', Programs);
+    Session.set('editorReady', true);
 
-    function failedSave(error) {
-      //console.log('did not save, reverting program');
-      //self.editor.loadProgram(self.editor.programId);
-    }
-    // if an object is selected load its code into the editor
     Tracker.autorun(() => {
       console.log('object selection changed!');
       if (self.objectSelector.selectedObject.get() && self.editor.isLoaded) {
@@ -63,97 +58,12 @@ class Construct {
           return Programs.findOne(selectedProgramId);
         });
         Tracker.nonreactive(() => {
-          self.editor.loadProgram(selectedProgram);
+          self.editor.setProgram(selectedProgram);
         });
       } else if (self.editor.isLoaded) {
         self.editor.clear();
       }
     }, () => {console.log('problem in the autorun'); });
-
-    // keep the selection menu updated
-    Tracker.autorun(() => {
-      var allProgramsCursor = Programs.find({}, {fields: {_id: 1, name: 1}});
-      self.editor.updateProgramSelector(allProgramsCursor);
-    });
-
-    // if program name is edited update the program object
-    Tracker.autorun(() => {
-      var programName = self.editor.programName.get();
-      console.log('updating the program name');
-      if (!self.editor.programId) {
-        console.log('need to select a program before changing the name');
-        return null;
-      }
-      Programs.update({_id: self.editor.programId}, {$set: {
-        name: programName
-      }}, failedSave);
-      return true;
-    });
-    // if init code is edited update the program object
-    Tracker.autorun(() => {
-
-      var initializeFunction = self.editor.initializeFunction.get();
-      var updateFunction = self.editor.updateFunction.get();
-      var programAttributes = self.editor.programAttributes.get();
-      if (self.editor.currentSection === self.editor.INITIALIZE) {
-        console.log('updating the init function');
-        if (initializeFunction) {
-          try {
-            eval(initializeFunction);
-            Programs.update({_id: self.editor.programId}, {$set: {
-              initialize: initializeFunction
-            }}, failedSave);
-          } catch (error) {
-            console.log('problem evaluating change, not saving: ${error.message}');
-          }
-        }
-      } else if (self.editor.currentSection === self.editor.UPDATE) {
-
-        if (updateFunction) {
-          try {
-            eval(updateFunction);
-            Programs.update({_id: self.editor.programId}, {$set: {
-              update: updateFunction
-            }}, failedSave);
-          } catch (error) {
-            console.log('problem evaluating change, not saving');
-          }
-        }
-      } else if (self.editor.currentSection === self.editor.ATTRIBUTES) {
-        if (programAttributes) {
-          try {
-            programAttributes = _.omit(JSON.parse(programAttributes), '_id');
-            Programs.update({_id: self.editor.programId}, {$set: programAttributes});
-          } catch (error) {
-            console.log('problem parsing attributes, not saving');
-          }
-
-        }
-      }
-    });
-
-    // initialize program selector
-    $(self.editor.programSelectorSelector).change((event) => {
-      console.log(event);
-      var selectedValue = $(self.editor.programSelectorSelector).val();
-      var selectedProgramObject = _.values(_.omit(
-        self.renderedObjects[selectedValue], 'updateProgram'))[0];
-      console.log('the value selected');
-      console.log(selectedValue);
-      if (selectedValue === 'None') {
-        self.editor.clear();
-      }
-      else if (selectedProgramObject) {
-        // use the object selector which will trigger the program to load
-        self.objectSelector.selectObject(selectedProgramObject);
-      } else {
-        console.log('problem finding rendered objects for ' + selectedValue +
-                    ' loading directly');
-        var selectedProgram = Programs.findOne(selectedValue);
-        self.editor.loadProgram(selectedProgram);
-      }
-    });
-
 
   }
 
@@ -177,14 +87,11 @@ class Construct {
         self.initProgram(program._id);
       },
       changed: (updatedProgram, originalProgram) => {
-        if (updatedProgram.initialize !== originalProgram.initialize ||
-            updatedProgram.update !== originalProgram.update) {
           self.removeRenderedObjects(updatedProgram._id);
           self.initProgram(updatedProgram._id);
-          if (self.editor.isActive.get()) {
-            self.editor.updateInitializationCode(updatedProgram.initialize);
+          if (self.editor.isActive.get() && self.editor.program.get()._id === updatedProgram._id) {
+            self.editor.setProgram(updatedProgram);
           }
-        }
       },
       removed: (oldProgram) => {
         self.removeRenderedObjects(oldProgram._id);
@@ -199,7 +106,7 @@ class Construct {
       var initializeProgram = eval(program.initialize);
 
       var programRenderedObjects = initializeProgram(
-        program, self.scene.children);
+        program, self.renderedObjects);
 
       _.each(programRenderedObjects, (renderedObject) => {
         renderedObject.programId = program._id;
@@ -368,7 +275,7 @@ class Construct {
   }
 
   render() {
-    if (this.controls && !this.controls.enabled && this.editor && this.editor.isActive.get()) {
+    if (this.controls && !this.controls.enabled && Session.get('editorReady') && this.editor.isActive.get()) {
       this.objectSelector.selectObjects(this.scene, this.camera);
     }
 
@@ -412,8 +319,13 @@ class Construct {
     Programs.find().forEach((program) => {
       // this doesn't need to happen each update
       try {
-        var updateProgram = self.renderedObjects[program._id].updateProgram;
-        var updatedFields = updateProgram(self.renderedObjects[program._id], program);
+        var renderedObjects = self.renderedObjects[program._id];
+        if (!renderedObjects) {
+          return;
+        }
+        var updateProgram = renderedObjects.updateProgram;
+        var updatedFields = updateProgram(
+          self.renderedObjects[program._id], program, self.renderedObjects);
         if (updatedFields) {
           Programs.update({_id: program._id}, {$set: updatedFields});
         }
@@ -434,6 +346,8 @@ class Construct {
         y: newProgramPosition.y,
         z: newProgramPosition.z
       },
+      man: `Your program's manual!  Add help info here`,
+      name: Meteor.user().username + ':' + (new Date()),
       contributors: [Meteor.user().username],
       initialize:
       `
@@ -450,6 +364,36 @@ class Construct {
       `
 (renderedObjects, self) => {
   var sphere = renderedObjects['placeholder'];
+}
+      `
+    });
+  }
+
+  createModule() {
+    var newModuleId = Programs.insert({
+      man: `This is a module, add a description of it's functionality here.`,
+      type: 'module',
+      name: `${Meteor.user().username}:module:${new Date()}`,
+      imports: [],
+      exports: [],
+      code: 'Define variables, functions, classes...',
+      contributors: [Meteor.user().username],
+      // TODO move this to the server
+      initialize:
+      `
+(self) => {
+  var geometry = new THREE.DodecahedronGeometry();
+  var material = new THREE.MeshNormalMaterial();
+  var position = Programs.findOne(this.userProgramId).position;
+  var module = new THREE.Mesh(geometry, material);
+  module.position.set(position.x + 10, position.y, position.z);
+  return {placeholder: module};
+}
+      `,
+      update:
+      `
+(renderedObjects, self) => {
+
 }
       `
     });
@@ -500,10 +444,13 @@ Template.hud.helpers({
     return Session.get('mouseView');
   },
   editorOpen: () => {
-    if(Session.get('constructReady')) {
-      return construct && construct.editor.isActive.get();
+    if(Session.get('editorReady')) {
+      return construct.editor.isActive.get();
     }
     return false;
+  },
+  editorReady: () => {
+    return Session.get('editorReady');
   }
 });
 
@@ -540,5 +487,58 @@ Template.hud.events({
   },
   'click .create-program': () => {
     construct.createProgram();
+  },
+  'click .create-module': () => {
+    construct.createModule();
+  }
+});
+
+
+// this is here to get access to the instantiated editor object
+// ideally it'd be in the editor module
+
+Template.editor.events({
+  'click .initialization-code': () => {
+    construct.editor.setActiveSection(construct.editor.INITIALIZE);
+  },
+  'click .update-code': () => {
+    construct.editor.setActiveSection(construct.editor.UPDATE);
+  },
+  'click .attributes': () => {
+    construct.editor.setActiveSection(construct.editor.ATTRIBUTES);
+  },
+  'change .program-selector': (event) => {
+    var programId = event.target.value;
+    var program = Programs.findOne(programId);
+    construct.editor.setProgram(program);
+  },
+  'click .delete-program': () => {
+    construct.editor.deleteProgram();
+  },
+  'click .copy-program': () => {
+    construct.editor.copyProgram(
+      Programs.findOne(construct.userProgramId).position);
+  },
+  'change .program-name-field': _.debounce((event) => {
+    var newName = event.target.value;
+    construct.editor.setName(newName);
+  }, 300)
+});
+
+Template.editor.helpers({
+  isModule: () => {
+    // need to rerun this AFTER editor is created...
+    if(Session.get('editorReady')) {
+      //      return construct && construct.editor && construct.editor.program construct.editor.programType.get() === 'module';
+    }
+  },
+  programs: () => {
+    var programs = Programs.find({}, {fields: {_id: 1, name: 1}}).map((program) => {
+      if (Session.get('editorReady') && construct.editor.program.get() && construct.editor.program.get()._id === program._id) {
+        program.selected = 'selected';
+      }
+      return program;
+    });
+    return programs;
   }
 });

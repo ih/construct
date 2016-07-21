@@ -90,11 +90,9 @@ canvas {
     position: fixed;
     left: 0px;
     top: 50%;
-
-
 }
 
-.open-editor {
+.open-editor, .create-program {
     margin-bottom: 10px;
 }
 

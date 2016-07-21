@@ -21,10 +21,10 @@ ecmascript
 accounts-ui
 accounts-password
 irvin:utility
-irvin:editor
 arch:ace-editor
 irvin:object-selector
 reactive-var
 twbs:bootstrap
 standard-minifier-css
 standard-minifier-js
+percolate:migrations

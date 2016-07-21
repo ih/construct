@@ -38,8 +38,11 @@
       <div class="button close-editor">Close Editor</div>
     {{else}}
       <div class="side-menu">
-        <div class="button open-editor">Open Editor ('e')</div>
-        <div class="button create-program">Create Program ('c')</div>
+        {{#if editorReady}}
+          <div class="button open-editor">Open Editor ('e')</div>
+          <div class="button create-program">Create Program ('c')</div>
+          <!-- <div class="button create-module">Create Module ('m')</div> -->
+        {{/if}}
       </div>
     {{/if}}
   {{/if}}
@@ -47,5 +50,27 @@
   <div class="pointer-lock"></div>
   <div class="menu">
     <div class="button full-screen">Start VR Mode</div>
+  </div>
+</template>
+
+<template name="editor">
+  <div id="editor">
+    {{#if isModule}}
+        <button class="exports btn btn-primary">Exports</button>
+    {{else}}
+        <button class="initialization-code btn btn-primary">Initialize</button>
+        <button class="update-code btn btn-secondary">Update</button>
+    {{/if}}
+        <!-- <button class="imports btn btn-primary">Imports</button> -->
+    <button class="attributes btn btn-success">Attributes</button>
+    <button class="delete-program btn btn-danger">Delete</button>
+    <button class="copy-program btn btn-info">Copy</button>
+    <select class="program-selector">
+      {{#each programs}}
+        <option value="{{_id}}" {{selected}}>{{name}}</option>
+      {{/each}}
+    </select>
+    <div id="ace-editor">
+    </div>
   </div>
 </template>
