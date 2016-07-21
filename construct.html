@@ -67,7 +67,7 @@
     <button class="copy-program btn btn-info">Copy</button>
     <select class="program-selector">
       {{#each programs}}
-        <option value="{{_id}}">{{name}}</option>
+        <option value="{{_id}}" {{selected}}>{{name}}</option>
       {{/each}}
     </select>
     <div id="ace-editor">

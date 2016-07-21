@@ -49,6 +49,22 @@ class Construct {
     var self = this;
     self.editor = new Editor('#editor', Programs);
     Session.set('editorReady', true);
+
+    Tracker.autorun(() => {
+      console.log('object selection changed!');
+      if (self.objectSelector.selectedObject.get() && self.editor.isLoaded) {
+        var selectedProgramId = self.objectSelector.selectedObject.get().programId;
+        var selectedProgram = Tracker.nonreactive(() => {
+          return Programs.findOne(selectedProgramId);
+        });
+        Tracker.nonreactive(() => {
+          self.editor.setProgram(selectedProgram);
+        });
+      } else if (self.editor.isLoaded) {
+        self.editor.clear();
+      }
+    }, () => {console.log('problem in the autorun'); });
+
   }
 
   initEditorOld() {
@@ -69,7 +85,7 @@ class Construct {
           return Programs.findOne(selectedProgramId);
         });
         Tracker.nonreactive(() => {
-          self.editor.loadProgram(selectedProgram);
+          self.editor.setProgram(selectedProgram);
         });
       } else if (self.editor.isLoaded) {
         self.editor.clear();
@@ -629,6 +645,12 @@ Template.editor.helpers({
     }
   },
   programs: () => {
-    return Programs.find({});
+    var programs = Programs.find({}).map((program) => {
+      if (Session.get('editorReady') && construct.editor.program.get() && construct.editor.program.get()._id === program._id) {
+        program.selected = 'selected';
+      }
+      return program;
+    });
+    return programs;
   }
 });
