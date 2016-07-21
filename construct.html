@@ -38,9 +38,11 @@
       <div class="button close-editor">Close Editor</div>
     {{else}}
       <div class="side-menu">
-        <div class="button open-editor">Open Editor ('e')</div>
-        <div class="button create-program">Create Program ('c')</div>
-        <div class="button create-module">Create Module ('m')</div>
+        {{#if editorReady}}
+          <div class="button open-editor">Open Editor ('e')</div>
+          <div class="button create-program">Create Program ('c')</div>
+          <div class="button create-module">Create Module ('m')</div>
+        {{/if}}
       </div>
     {{/if}}
   {{/if}}

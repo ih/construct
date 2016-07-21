@@ -540,10 +540,13 @@ Template.hud.helpers({
     return Session.get('mouseView');
   },
   editorOpen: () => {
-    if(Session.get('constructReady')) {
-      return construct && construct.editor.isActive.get();
+    if(Session.get('editorReady')) {
+      return construct.editor.isActive.get();
     }
     return false;
+  },
+  editorReady: () => {
+    return Session.get('editorReady');
   }
 });
 
