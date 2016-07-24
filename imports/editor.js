@@ -12,7 +12,7 @@ export default class Editor {
     self.INITIALIZE = 'initialize';
     self.UPDATE = 'update';
     self.MODULE_CODE = 'code';
-    self.CODE_ATTRIBUTES = [self.INITIALIZE, self.UPDATE, self.CODE];
+    self.CODE_ATTRIBUTES = [self.INITIALIZE, self.UPDATE, self.MODULE_CODE];
     self.ATTRIBUTES = 'attributes';
     // used to determine what can be thrown away
     self.REQUIRED_PROPERTIES = _.union(
@@ -110,7 +110,6 @@ export default class Editor {
 
   setProgram(program) {
     this.program.set(program);
-    this.setActiveSection(this.ATTRIBUTES);
   }
 
   deleteProgram() {

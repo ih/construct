@@ -514,6 +514,7 @@ Template.editor.events({
     var programId = event.target.value;
     var program = Programs.findOne(programId);
     construct.editor.setProgram(program);
+    construct.editor.setActiveSection(construct.editor.ATTRIBUTES);
   },
   'click .delete-program': () => {
     construct.editor.deleteProgram();
