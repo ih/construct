@@ -41,7 +41,7 @@
         {{#if editorReady}}
           <div class="button open-editor">Open Editor ('e')</div>
           <div class="button create-program">Create Program ('c')</div>
-          <!-- <div class="button create-module">Create Module ('m')</div> -->
+          <div class="button create-module">Create Module ('m')</div>
         {{/if}}
       </div>
     {{/if}}
@@ -55,21 +55,24 @@
 
 <template name="editor">
   <div id="editor">
-    {{#if isModule}}
-        <button class="exports btn btn-primary">Exports</button>
-    {{else}}
+    <div>
+      <select class="program-selector">
+        {{#each programs}}
+        <option value="{{_id}}" {{selected}}>{{name}}</option>
+        {{/each}}
+      </select>
+    </div>
+    {{#if programIsSet}}
+      <button class="attributes btn btn-success">Attributes</button>
+      {{#if isModule}}
+        <button class="module-code btn btn-primary">Code</button>
+      {{else}}
         <button class="initialization-code btn btn-primary">Initialize</button>
         <button class="update-code btn btn-secondary">Update</button>
+      {{/if}}
+      <button class="delete-program btn btn-danger">Delete</button>
+      <button class="copy-program btn btn-info">Copy</button>
     {{/if}}
-        <!-- <button class="imports btn btn-primary">Imports</button> -->
-    <button class="attributes btn btn-success">Attributes</button>
-    <button class="delete-program btn btn-danger">Delete</button>
-    <button class="copy-program btn btn-info">Copy</button>
-    <select class="program-selector">
-      {{#each programs}}
-        <option value="{{_id}}" {{selected}}>{{name}}</option>
-      {{/each}}
-    </select>
     <div id="ace-editor">
     </div>
   </div>

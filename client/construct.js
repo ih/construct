@@ -341,14 +341,15 @@ class Construct {
     var newProgramPosition = Programs.findOne(this.userProgramId).position;
     // the observer on the collection will render the new program
     var newProgramId = Programs.insert({
+      name: Meteor.user().username + ':' + (new Date()),
+      imports: [],
       position: {
         x: newProgramPosition.x,
         y: newProgramPosition.y,
         z: newProgramPosition.z
       },
-      man: `Your program's manual!  Add help info here`,
-      name: Meteor.user().username + ':' + (new Date()),
       contributors: [Meteor.user().username],
+      man: `Your program's manual!  Add help info here`,
       initialize:
       `
 (self) => {
@@ -375,7 +376,6 @@ class Construct {
       type: 'module',
       name: `${Meteor.user().username}:module:${new Date()}`,
       imports: [],
-      exports: [],
       code: 'Define variables, functions, classes...',
       contributors: [Meteor.user().username],
       // TODO move this to the server
@@ -504,6 +504,9 @@ Template.editor.events({
   'click .update-code': () => {
     construct.editor.setActiveSection(construct.editor.UPDATE);
   },
+  'click .module-code': () => {
+    construct.editor.setActiveSection(construct.editor.MODULE_CODE);
+  },
   'click .attributes': () => {
     construct.editor.setActiveSection(construct.editor.ATTRIBUTES);
   },
@@ -526,11 +529,16 @@ Template.editor.events({
 });
 
 Template.editor.helpers({
+  programIsSet: () => {
+    return Session.get('editorReady') && construct.editor.program.get();
+  },
   isModule: () => {
     // need to rerun this AFTER editor is created...
     if(Session.get('editorReady')) {
-      //      return construct && construct.editor && construct.editor.program construct.editor.programType.get() === 'module';
+      var program = construct.editor.program.get();
+      return program && program.type === 'module';
     }
+    return false;
   },
   programs: () => {
     var programs = Programs.find({}, {fields: {_id: 1, name: 1}}).map((program) => {

@@ -11,7 +11,8 @@ export default class Editor {
     // move these constants to a Program module or use a schema
     self.INITIALIZE = 'initialize';
     self.UPDATE = 'update';
-    self.CODE_ATTRIBUTES = [self.INITIALIZE, self.UPDATE];
+    self.MODULE_CODE = 'code';
+    self.CODE_ATTRIBUTES = [self.INITIALIZE, self.UPDATE, self.CODE];
     self.ATTRIBUTES = 'attributes';
     // used to determine what can be thrown away
     self.REQUIRED_PROPERTIES = _.union(
@@ -109,6 +110,7 @@ export default class Editor {
 
   setProgram(program) {
     this.program.set(program);
+    this.setActiveSection(this.ATTRIBUTES);
   }
 
   deleteProgram() {
