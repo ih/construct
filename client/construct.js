@@ -1,9 +1,12 @@
 import Editor from '../imports/editor.js';
+import MODULE from '../imports/program-helpers.js';
 
 var Programs = new Mongo.Collection('programs');
 // https://github.com/josdirksen/learning-threejs/blob/master/chapter-09/07-first-person-camera.html
 
 var construct = null;
+
+var globalScope = window;
 
 Accounts.ui.config({
   passwordSignupFields: 'USERNAME_AND_EMAIL'
@@ -28,7 +31,7 @@ class Construct {
     // set by initPrograms
     this.userProgramId = null;
 
-    this.initPrograms(user);
+    this.initPrograms();
     this.initKeyboard();
     this.initCamera();
     this.initMouse();
@@ -84,11 +87,11 @@ class Construct {
             program.userId === Meteor.userId()) {
           self.userProgramId = program._id;
         }
-        self.initProgram(program._id);
+        self.initProgram(program);
       },
       changed: (updatedProgram, originalProgram) => {
           self.removeRenderedObjects(updatedProgram._id);
-          self.initProgram(updatedProgram._id);
+          self.initProgram(updatedProgram);
           if (self.editor.isActive.get() && self.editor.program.get()._id === updatedProgram._id) {
             self.editor.setProgram(updatedProgram);
           }
@@ -99,11 +102,11 @@ class Construct {
     });
   }
 
-  initProgram(programId) {
+  initProgram(program) {
     var self = this;
-    var program = Programs.findOne({_id: programId});
     try {
-      var initializeProgram = eval(program.initialize);
+      var initializeProgram = self.evalProgramWithDependencies(
+        program.initialize, program);
 
       var programRenderedObjects = initializeProgram(
         program, self.renderedObjects);
@@ -121,6 +124,54 @@ class Construct {
       console.warn(
         `Problem initializing program ${program._id}: ${errorString}`);
     }
+  }
+
+  /*
+   Evaluate programFunction after all of the modules in the import chain/tree
+   have been evaluated (either in during this call or previously)
+   */
+  evalProgramWithDependencies(programFunction, program) {
+    var self = this;
+    var unevaluatedImports = _.reject(current.imports, hasBeenEvaluated);
+
+    _.each(unevaluatedImports, (module) => {
+      self.evalModuleWithDependencies(module);
+    });
+
+    return eval(programFunction);
+  }
+
+  evalModuleWithDependencies(module) {
+    var self = this;
+    var modulesToEvaluate = [module];
+    // dependencies that have been evaluated in past calls to eval
+    // or have already been added to the stack of modules to evaluate
+    var modulesVisited = {};
+
+    while (!_.isEmpty(modulesToEvaluate)) {
+      var current = modulesToEvaluate.pop();
+      // if all the imports have already been evaluated
+      // evaluate current, otherwise
+      var unvisitedModules = _.reject(current.imports, hasBeenVisited);
+      if (_.isEmpty(unvisitedModules)) {
+        self.evalModule(current);
+      } else {
+        modulesToEvaluate.push(current);
+
+        _.each(unvisitedModules, (unvisitedModule) => {
+          modulesToEvaluate.push(unvisitedModule);
+          modulesVisited[unvisitedModule.name] = true;
+        });
+      };
+    }
+
+    function hasBeenVisited(module) {
+      return _.has(globalScope, module.name) ||
+        _.has(modulesVisited, module.name);
+    }
+  }
+
+  evalModule(module) {
   }
 
   initKeyboard() {
@@ -373,7 +424,7 @@ class Construct {
   createModule() {
     var newModuleId = Programs.insert({
       man: `This is a module, add a description of it's functionality here.`,
-      type: 'module',
+      type: MODULE,
       name: `${Meteor.user().username}:module:${new Date()}`,
       imports: [],
       code: 'Define variables, functions, classes...',
@@ -537,7 +588,7 @@ Template.editor.helpers({
     // need to rerun this AFTER editor is created...
     if(Session.get('editorReady')) {
       var program = construct.editor.program.get();
-      return program && program.type === 'module';
+      return program && program.type === MODULE;
     }
     return false;
   },
