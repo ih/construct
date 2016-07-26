@@ -132,13 +132,17 @@ class Construct {
    */
   evalProgramWithDependencies(programFunction, program) {
     var self = this;
-    var unevaluatedImports = _.reject(current.imports, hasBeenEvaluated);
+    var unevaluatedImports = _.reject(program.imports, hasBeenEvaluated);
 
     _.each(unevaluatedImports, (module) => {
       self.evalModuleWithDependencies(module);
     });
 
     return eval(programFunction);
+
+    function hasBeenEvaluated(module) {
+      return _.has(globalScope, module.name);
+    }
   }
 
   evalModuleWithDependencies(module) {
@@ -172,6 +176,16 @@ class Construct {
   }
 
   evalModule(module) {
+    globalScope[module.name] = {};
+    var moduleObject = globalScope[module.name];
+    eval(module.code);
+    var parseTree = esprima.parse(module.code);
+    var declarations = _.filter(parseTree.body, (node) => {
+      return node.type.indexOf('Declaration') > 0;
+    });
+    _.each(declarations, (declaration) => {
+      moduleObject[declaration.id.name] = eval(declaration.id.name);
+    });
   }
 
   initKeyboard() {
