@@ -1,5 +1,5 @@
 import Editor from '../imports/editor.js';
-import MODULE from '../imports/program-helpers.js';
+import ProgramHelpers from '../imports/program-helpers.js';
 
 var Programs = new Mongo.Collection('programs');
 // https://github.com/josdirksen/learning-threejs/blob/master/chapter-09/07-first-person-camera.html
@@ -7,6 +7,7 @@ var Programs = new Mongo.Collection('programs');
 var construct = null;
 
 var globalScope = window;
+var MODULE = ProgramHelpers.MODULE;
 
 Accounts.ui.config({
   passwordSignupFields: 'USERNAME_AND_EMAIL'
@@ -134,20 +135,21 @@ class Construct {
     var self = this;
     var unevaluatedImports = _.reject(program.imports, hasBeenEvaluated);
 
-    _.each(unevaluatedImports, (module) => {
-      self.evalModuleWithDependencies(module);
+    _.each(unevaluatedImports, (moduleName) => {
+      self.evalModuleWithDependencies(moduleName);
     });
 
     return eval(programFunction);
 
-    function hasBeenEvaluated(module) {
-      return _.has(globalScope, module.name);
+    function hasBeenEvaluated(moduleName) {
+      return _.has(globalScope, moduleName);
     }
   }
 
-  evalModuleWithDependencies(module) {
+  evalModuleWithDependencies(moduleName) {
     var self = this;
-    var modulesToEvaluate = [module];
+    var module = Programs.findOne({name: moduleName});
+    var modulesToEvaluate = module ? [module] : [];
     // dependencies that have been evaluated in past calls to eval
     // or have already been added to the stack of modules to evaluate
     var modulesVisited = {};
@@ -156,7 +158,9 @@ class Construct {
       var current = modulesToEvaluate.pop();
       // if all the imports have already been evaluated
       // evaluate current, otherwise
-      var unvisitedModules = _.reject(current.imports, hasBeenVisited);
+      var unvisitedModuleNames = _.reject(current.imports, hasBeenVisited);
+      var unvisitedModules = _.isEmpty(unvisitedModuleNames) ? [] :
+            _.compact(Programs.find({name: unvisitedModuleNames}).fetch());
       if (_.isEmpty(unvisitedModules)) {
         self.evalModule(current);
       } else {
