@@ -89,7 +89,7 @@ export default class Editor {
       if (program === undefined) {
         self.setValue(self.defaultText());
       } else if (activeSection === self.ATTRIBUTES) {
-        var attributes = _.omit(program, self.CODE_ATTRIBUTES);
+        var attributes = _.omit(program, self.CODE_ATTRIBUTES.concat(['_id']));
         self.setValue(JSON.stringify(attributes, null, 2));
       } else {
         self.setValue(program[activeSection]);
