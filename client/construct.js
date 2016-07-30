@@ -19,7 +19,7 @@ Meteor.subscribe('all-programs');
 class Construct {
   constructor($container, user) {
     console.log('initializing the construct');
-    this.evalModule = new Eval(Programs);
+    this.eval = new Eval(Programs);
     this.initPhysics();
 
     this.$container = $container;
@@ -90,14 +90,20 @@ class Construct {
             program.userId === Meteor.userId()) {
           self.userProgramId = program._id;
         }
-        self.initProgram(program);
+        if (program.type !== MODULE) {
+          self.initProgram(program);
+        }
       },
       changed: (updatedProgram, originalProgram) => {
-          self.removeRenderedObjects(updatedProgram._id);
+        self.removeRenderedObjects(updatedProgram._id);
+        if (updatedProgram.type === MODULE) {
+          self.eval.evalModule(updatedProgram);
+        } else {
           self.initProgram(updatedProgram);
-          if (self.editor.isActive.get() && self.editor.program.get()._id === updatedProgram._id) {
-            self.editor.setProgram(updatedProgram);
-          }
+        }
+        if (self.editor.isActive.get() && self.editor.program.get()._id === updatedProgram._id) {
+          self.editor.setProgram(updatedProgram);
+        }
       },
       removed: (oldProgram) => {
         self.removeRenderedObjects(oldProgram._id);
@@ -108,7 +114,7 @@ class Construct {
   initProgram(program) {
     var self = this;
     try {
-      var initializeProgram = self.evalModule.evalProgramWithDependencies(
+      var initializeProgram = self.eval.evalProgramWithDependencies(
         program.initialize, program);
 
       var programRenderedObjects = initializeProgram(
