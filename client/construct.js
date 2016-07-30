@@ -349,14 +349,6 @@ class Construct {
     });
   }
 
-  evalTest() {
-    try {
-      eval("var a = 3");
-    } catch(e) {
-      console.log(e.message);
-    }
-  }
-
   createProgram() {
     var newProgramPosition = Programs.findOne(this.userProgramId).position;
     // the observer on the collection will render the new program
