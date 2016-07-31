@@ -493,7 +493,6 @@ Template.hud.events({
   },
   'click .open-editor': () => {
     construct.editor.activate();
-    construct.evalTest();
   },
   'click .close-editor': () => {
     construct.editor.deactivate();
