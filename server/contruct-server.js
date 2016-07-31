@@ -28,6 +28,17 @@ Migrations.add({
   }
 });
 
+// add import field to all programs
+Migrations.add({
+  version: 3,
+  up: function() {
+    Programs.find().forEach(function (program) {
+      console.log('migration for adding import field to all programs');
+      Programs.update(program._id, {$set: {imports: []}});
+    });
+  }
+});
+
 
 Programs.allow({
   insert: function (userId, doc) {

@@ -1,9 +1,14 @@
 import Editor from '../imports/editor.js';
+import ProgramHelpers from '../imports/program-helpers.js';
+import Eval from '../imports/eval.js';
 
 var Programs = new Mongo.Collection('programs');
 // https://github.com/josdirksen/learning-threejs/blob/master/chapter-09/07-first-person-camera.html
 
 var construct = null;
+
+
+var MODULE = ProgramHelpers.MODULE;
 
 Accounts.ui.config({
   passwordSignupFields: 'USERNAME_AND_EMAIL'
@@ -14,6 +19,7 @@ Meteor.subscribe('all-programs');
 class Construct {
   constructor($container, user) {
     console.log('initializing the construct');
+    this.eval = new Eval(Programs);
     this.initPhysics();
 
     this.$container = $container;
@@ -28,7 +34,7 @@ class Construct {
     // set by initPrograms
     this.userProgramId = null;
 
-    this.initPrograms(user);
+    this.initPrograms();
     this.initKeyboard();
     this.initCamera();
     this.initMouse();
@@ -84,14 +90,20 @@ class Construct {
             program.userId === Meteor.userId()) {
           self.userProgramId = program._id;
         }
-        self.initProgram(program._id);
+        if (program.type !== MODULE) {
+          self.initProgram(program);
+        }
       },
       changed: (updatedProgram, originalProgram) => {
-          self.removeRenderedObjects(updatedProgram._id);
-          self.initProgram(updatedProgram._id);
-          if (self.editor.isActive.get() && self.editor.program.get()._id === updatedProgram._id) {
-            self.editor.setProgram(updatedProgram);
-          }
+        self.removeRenderedObjects(updatedProgram._id);
+        if (updatedProgram.type === MODULE) {
+          self.eval.evalModule(updatedProgram);
+        } else {
+          self.initProgram(updatedProgram);
+        }
+        if (self.editor.isActive.get() && self.editor.program.get()._id === updatedProgram._id) {
+          self.editor.setProgram(updatedProgram);
+        }
       },
       removed: (oldProgram) => {
         self.removeRenderedObjects(oldProgram._id);
@@ -99,11 +111,11 @@ class Construct {
     });
   }
 
-  initProgram(programId) {
+  initProgram(program) {
     var self = this;
-    var program = Programs.findOne({_id: programId});
     try {
-      var initializeProgram = eval(program.initialize);
+      var initializeProgram = self.eval.evalProgramWithDependencies(
+        program.initialize, program);
 
       var programRenderedObjects = initializeProgram(
         program, self.renderedObjects);
@@ -341,14 +353,15 @@ class Construct {
     var newProgramPosition = Programs.findOne(this.userProgramId).position;
     // the observer on the collection will render the new program
     var newProgramId = Programs.insert({
+      name: Meteor.user().username + ':' + (new Date()),
+      imports: [],
       position: {
         x: newProgramPosition.x,
         y: newProgramPosition.y,
         z: newProgramPosition.z
       },
-      man: `Your program's manual!  Add help info here`,
-      name: Meteor.user().username + ':' + (new Date()),
       contributors: [Meteor.user().username],
+      man: `Your program's manual!  Add help info here`,
       initialize:
       `
 (self) => {
@@ -372,10 +385,9 @@ class Construct {
   createModule() {
     var newModuleId = Programs.insert({
       man: `This is a module, add a description of it's functionality here.`,
-      type: 'module',
+      type: MODULE,
       name: `${Meteor.user().username}:module:${new Date()}`,
       imports: [],
-      exports: [],
       code: 'Define variables, functions, classes...',
       contributors: [Meteor.user().username],
       // TODO move this to the server
@@ -504,6 +516,9 @@ Template.editor.events({
   'click .update-code': () => {
     construct.editor.setActiveSection(construct.editor.UPDATE);
   },
+  'click .module-code': () => {
+    construct.editor.setActiveSection(construct.editor.MODULE_CODE);
+  },
   'click .attributes': () => {
     construct.editor.setActiveSection(construct.editor.ATTRIBUTES);
   },
@@ -511,6 +526,7 @@ Template.editor.events({
     var programId = event.target.value;
     var program = Programs.findOne(programId);
     construct.editor.setProgram(program);
+    construct.editor.setActiveSection(construct.editor.ATTRIBUTES);
   },
   'click .delete-program': () => {
     construct.editor.deleteProgram();
@@ -526,11 +542,16 @@ Template.editor.events({
 });
 
 Template.editor.helpers({
+  programIsSet: () => {
+    return Session.get('editorReady') && construct.editor.program.get();
+  },
   isModule: () => {
     // need to rerun this AFTER editor is created...
     if(Session.get('editorReady')) {
-      //      return construct && construct.editor && construct.editor.program construct.editor.programType.get() === 'module';
+      var program = construct.editor.program.get();
+      return program && program.type === MODULE;
     }
+    return false;
   },
   programs: () => {
     var programs = Programs.find({}, {fields: {_id: 1, name: 1}}).map((program) => {

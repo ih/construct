@@ -11,7 +11,8 @@ export default class Editor {
     // move these constants to a Program module or use a schema
     self.INITIALIZE = 'initialize';
     self.UPDATE = 'update';
-    self.CODE_ATTRIBUTES = [self.INITIALIZE, self.UPDATE];
+    self.MODULE_CODE = 'code';
+    self.CODE_ATTRIBUTES = [self.INITIALIZE, self.UPDATE, self.MODULE_CODE];
     self.ATTRIBUTES = 'attributes';
     // used to determine what can be thrown away
     self.REQUIRED_PROPERTIES = _.union(
@@ -88,7 +89,7 @@ export default class Editor {
       if (program === undefined) {
         self.setValue(self.defaultText());
       } else if (activeSection === self.ATTRIBUTES) {
-        var attributes = _.omit(program, self.CODE_ATTRIBUTES);
+        var attributes = _.omit(program, self.CODE_ATTRIBUTES.concat(['_id']));
         self.setValue(JSON.stringify(attributes, null, 2));
       } else {
         self.setValue(program[activeSection]);
