@@ -321,8 +321,10 @@ class Construct {
 
     if (this.moveForward || this.moveBackward || this.moveLeft ||
         this.moveRight) {
-      Programs.update({_id: this.userProgramId}, {$set: {
-        position: user.position}});
+      _.throttle(() => {
+        Programs.update({_id: this.userProgramId}, {$set: {
+          position: user.position}});
+      }, 300)();
     }
   }
 
@@ -339,7 +341,9 @@ class Construct {
         var updatedFields = updateProgram(
           self.renderedObjects[program._id], program, self.renderedObjects);
         if (updatedFields) {
-          Programs.update({_id: program._id}, {$set: updatedFields});
+          _.throttle(() => {
+            Programs.update({_id: program._id}, {$set: updatedFields});
+          }, 300)();
         }
       } catch (error) {
         var errorString = error.message;
