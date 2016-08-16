@@ -70,6 +70,7 @@ Meteor.startup(function () {
       },
       name: 'Sample Program',
       man: 'This is the man page.  You can put information here that tells what the program is about and how to use it.',
+      contributors: ['architect'],
       initialize:
       `
 (self) => {
@@ -96,6 +97,35 @@ Meteor.startup(function () {
 }
       `
     });
+
+    Programs.insert({
+      position: {
+        x: 0,
+        y: -1,
+        z: 0
+      },
+      name: 'Floor',
+      man: 'This is the floor',
+      contributors: ['architect'],
+      initialize:
+      `
+(self) => {
+  var floorGeometry = new THREE.CubeGeometry(10000, 1, 1000);
+  var material = Physijs.createMaterial(new THREE.MeshBasicMaterial({color: 'blue', wireframe: false}), 1, .9);
+  var position = self.position;
+  var floor = new Physijs.BoxMesh(floorGeometry, material, 0);
+  floor.position.set(position.x, position.y, position.z);
+  return {floor: floor};
+}
+      `,
+      update:
+      `
+(renderedObjects, self) => {
+  var floor = renderedObjects['floor'];
+}
+      `
+
+    });
   }
   if (Meteor.users.find().count() === 0) {
     console.log('creating the first user');
@@ -116,7 +146,12 @@ Accounts.onCreateUser(function(options, user) {
     userId: user._id,
     position: {
       x: 0,
-      y: 5,
+      y: 10,
+      z: 0
+    },
+    rotation: {
+      x: 0,
+      y: 0,
       z: 0
     },
     man: 'Your program\'s manual!  Add help info here',
@@ -126,10 +161,10 @@ Accounts.onCreateUser(function(options, user) {
     `
 (self) => {
   var geometry = new THREE.CubeGeometry(10, 10, 10);
-  var material = new THREE.MeshBasicMaterial({color: self.color});
-  var position = self.position;
-  var cube = new THREE.Mesh(geometry, material);
-  cube.position.set(position.x, position.y, position.z);
+  var material = new Physijs.createMaterial(
+    new THREE.MeshBasicMaterial({color: self.color}), 1, .9);
+  var cube = new Physijs.BoxMesh(geometry, material);
+  cube.position.set(self.position.x, self.position.y, self.position.z);
   return {user: cube};
 }
     `,
@@ -137,12 +172,7 @@ Accounts.onCreateUser(function(options, user) {
     `
 (renderedObjects, self) => {
   var user = renderedObjects['user'];
-  var deltaX = self.position.x - user.position.x;
-  var deltaY = self.position.y - user.position.y;
-  var deltaZ = self.position.z - user.position.z;
-  user.translateX(deltaX);
-  user.translateY(deltaY);
-  user.translateZ(deltaZ);
+
 }
     `
   });

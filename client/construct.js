@@ -5,10 +5,13 @@ import Eval from '../imports/eval.js';
 var Programs = new Mongo.Collection('programs');
 // https://github.com/josdirksen/learning-threejs/blob/master/chapter-09/07-first-person-camera.html
 
+Session.set('editorReady', false);
+
 var construct = null;
 
 
 var MODULE = ProgramHelpers.MODULE;
+var USER = ProgramHelpers.USER;
 
 Accounts.ui.config({
   passwordSignupFields: 'USERNAME_AND_EMAIL'
@@ -76,16 +79,22 @@ class Construct {
   removeRenderedObjects(programId) {
     var self = this;
     _.each(self.renderedObjects[programId], (renderedObject) => {
-      self.scene.remove(renderedObject);
+      // since we store the update function in renderedObjects dictionary
+      // for a program
+      if (!_.isFunction(renderedObject)) {
+        self.scene.remove(renderedObject);
+      }
     });
+    delete self.renderedObjects[programId];
   }
 
   initPrograms() {
     var self = this;
 
     // observe to load any new programs that get created by other users
-    Programs.find().observe({
-      added: (program) => {
+    Programs.find().observeChanges({
+      added: (programId) => {
+        var program = Programs.findOne(programId);
         if (program.type && program.type === 'user' &&
             program.userId === Meteor.userId()) {
           self.userProgramId = program._id;
@@ -94,11 +103,16 @@ class Construct {
           self.initProgram(program);
         }
       },
-      changed: (updatedProgram, originalProgram) => {
-        self.removeRenderedObjects(updatedProgram._id);
+      changed: (programId, changedFields) => {
+        var updatedProgram = Programs.findOne(programId);
         if (updatedProgram.type === MODULE) {
           self.eval.evalModule(updatedProgram);
-        } else {
+        }
+        // don't re-initialize a user's program for changes in movement
+        // since program is updated whenever a user is moving
+        else if (updatedProgram.type !== USER ||
+                 !ProgramHelpers.onlyMovementAttributes(_.keys(changedFields))) {
+          self.removeRenderedObjects(updatedProgram._id);
           self.initProgram(updatedProgram);
         }
         if (self.editor.isActive.get() && self.editor.program.get()._id === updatedProgram._id) {
@@ -120,14 +134,17 @@ class Construct {
       var programRenderedObjects = initializeProgram(
         program, self.renderedObjects);
 
-      _.each(programRenderedObjects, (renderedObject) => {
-        renderedObject.programId = program._id;
-        self.scene.add(renderedObject);
-      });
-
       programRenderedObjects.updateProgram = eval(program.update);
 
+      _.each(programRenderedObjects, (renderedObject) => {
+        if (!_.isFunction(renderedObject)) {
+          renderedObject.programId = program._id;
+          self.scene.add(renderedObject);
+        }
+      });
+
       self.renderedObjects[program._id] = programRenderedObjects;
+
     } catch (error) {
       var errorString = error.message;
       console.warn(
@@ -143,22 +160,22 @@ class Construct {
 
       case 38: // up
       case 87: // w
-        self.moveForward = false;
+        Programs.update({_id: this.userProgramId}, {$set: {moveForward: false}});
         break;
 
       case 37: // left
       case 65: // a
-        self.moveLeft = false;
+        Programs.update({_id: this.userProgramId}, {$set: {rotateLeft: false}});
         break;
 
       case 40: // down
       case 83: // s
-        self.moveBackward = false;
+        Programs.update({_id: this.userProgramId}, {$set: {moveBackward: false}});
         break;
 
       case 39: // right
       case 68: // d
-        self.moveRight = false;
+        Programs.update({_id: this.userProgramId}, {$set: {rotateRight: false}});
         break;
       }
     };
@@ -181,21 +198,21 @@ class Construct {
         break;
       case 38: // up
       case 87: // w
-        self.moveForward = true;
+        Programs.update({_id: this.userProgramId}, {$set: {moveForward: true}});
         break;
 
       case 37: // left
       case 65: // a
-        self.moveLeft = true; break;
-
+        Programs.update({_id: this.userProgramId}, {$set: {rotateLeft: true}});
+        break;
       case 40: // down
       case 83: // s
-        self.moveBackward = true;
+        Programs.update({_id: this.userProgramId}, {$set: {moveBackward: true}});
         break;
 
       case 39: // right
       case 68: // d
-        self.moveRight = true;
+        Programs.update({_id: this.userProgramId}, {$set: {rotateRight: true}});
         break;
       }
     };
@@ -294,36 +311,27 @@ class Construct {
     this.vrControls.update();
     //    this.glRenderer.render(this.scene, this.camera);
     //    this.cssRenderer.render(this.cssScene, this.camera);
-    this.vrEffect.render(this.scene, this.camera);
     this.scene.simulate();
+    this.vrEffect.render(this.scene, this.camera);
   }
 
   update() {
-    var delta = 1;
-
     this.updatePrograms();
-
-    var user = this.controls ? this.controls.getObject() : this.camera;
-
-    if (this.moveForward) {
-      user.translateZ(-delta);
+    var userCamera = this.controls ? this.controls.getObject() : this.camera;
+    var renderedUser = this.renderedObjects[this.userProgramId];
+    if (!renderedUser) {
+      return;
     }
-    if (this.moveBackward) {
-      user.translateZ(delta);
-    }
+    renderedUser = renderedUser.user;
 
-    if (this.moveLeft) {
-      user.translateX(-delta);
-    }
-    if (this.moveRight) {
-      user.translateX(delta);
-    }
-
-    if (this.moveForward || this.moveBackward || this.moveLeft ||
-        this.moveRight) {
+    if (ProgramHelpers.userProgramIsMoving(renderedUser)) {
+      console.log('user moving');
+      userCamera.position.copy(renderedUser.position);
       _.throttle(() => {
         Programs.update({_id: this.userProgramId}, {$set: {
-          position: user.position}});
+          position: renderedUser.position,
+          rotation: renderedUser.rotation
+        }});
       }, 300)();
     }
   }
@@ -436,8 +444,8 @@ Template.construct.onRendered(() => {
     construct.render();
     function animate() {
       requestAnimationFrame(animate);
-      construct.render();
       construct.update();
+      construct.render();
     }
     animate();
   });
