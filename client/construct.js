@@ -1,5 +1,7 @@
 import Editor from '../imports/editor.js';
+import CurrentUser from '../imports/current-user.js';
 import ProgramHelpers from '../imports/program-helpers.js';
+import MathHelpers from '../imports/math-helpers.js';
 import Eval from '../imports/eval.js';
 
 var Programs = new Mongo.Collection('programs');
@@ -12,6 +14,7 @@ var construct = null;
 
 var MODULE = ProgramHelpers.MODULE;
 var USER = ProgramHelpers.USER;
+var radianToDegree = MathHelpers.radianToDegree;
 
 Accounts.ui.config({
   passwordSignupFields: 'USERNAME_AND_EMAIL'
@@ -36,21 +39,17 @@ class Construct {
     this.renderedObjects = {};
     // set by initPrograms
     this.userProgramId = null;
-
     this.initPrograms();
-    this.initKeyboard();
     this.initCamera();
     this.initMouse();
+    this.initCurrentUser();
     this.initGLRenderer();
-    //this.initCSSRenderer();
-    // in the future attach to $container
 
     this.initWebVR();
     this.initEvents();
     this.initEditor();
 
     this.$container.append(this.glRenderer.domElement);
-    //this.cssRenderer.domElement.appendChild(this.glRenderer.domElement);
     Session.set('constructReady', true);
   }
 
@@ -114,9 +113,9 @@ class Construct {
                  !ProgramHelpers.onlyMovementAttributes(_.keys(changedFields))) {
           self.removeRenderedObjects(updatedProgram._id);
           self.initProgram(updatedProgram);
-        }
-        if (self.editor.isActive.get() && self.editor.program.get()._id === updatedProgram._id) {
-          self.editor.setProgram(updatedProgram);
+          if (self.editor.isActive.get() && self.editor.program.get()._id === updatedProgram._id) {
+            self.editor.setProgram(updatedProgram);
+          }
         }
       },
       removed: (oldProgram) => {
@@ -144,82 +143,16 @@ class Construct {
       });
 
       self.renderedObjects[program._id] = programRenderedObjects;
+      if (program._id === self.currentUser.program._id) {
+        self.currentUser.renderedMesh = programRenderedObjects.user;
+
+      }
 
     } catch (error) {
       var errorString = error.message;
       console.warn(
         `Problem initializing program ${program._id}: ${errorString}`);
     }
-  }
-
-  initKeyboard() {
-    var self = this;
-
-    var onKeyUp = (event) => {
-      switch( event.keyCode ) {
-
-      case 38: // up
-      case 87: // w
-        Programs.update({_id: this.userProgramId}, {$set: {moveForward: false}});
-        break;
-
-      case 37: // left
-      case 65: // a
-        Programs.update({_id: this.userProgramId}, {$set: {rotateLeft: false}});
-        break;
-
-      case 40: // down
-      case 83: // s
-        Programs.update({_id: this.userProgramId}, {$set: {moveBackward: false}});
-        break;
-
-      case 39: // right
-      case 68: // d
-        Programs.update({_id: this.userProgramId}, {$set: {rotateRight: false}});
-        break;
-      }
-    };
-
-    var onKeyDown = (event) => {
-      if (event.keyCode === 69 && !self.editor.isActive.get() && !self.controls.enabled) {
-        self.editor.toggle();
-        if (!self.editor.isActive.get()) {
-          self.objectSelector.unselectAll();
-
-        }
-        return;
-      } else if (self.editor.isActive.get()) {
-        return;
-      }
-
-      switch ( event.keyCode ) {
-      case 67:
-        self.createProgram();
-        break;
-      case 38: // up
-      case 87: // w
-        Programs.update({_id: this.userProgramId}, {$set: {moveForward: true}});
-        break;
-
-      case 37: // left
-      case 65: // a
-        Programs.update({_id: this.userProgramId}, {$set: {rotateLeft: true}});
-        break;
-      case 40: // down
-      case 83: // s
-        Programs.update({_id: this.userProgramId}, {$set: {moveBackward: true}});
-        break;
-
-      case 39: // right
-      case 68: // d
-        Programs.update({_id: this.userProgramId}, {$set: {rotateRight: true}});
-        break;
-      }
-    };
-
-    document.addEventListener( 'keydown', onKeyDown, false );
-    document.addEventListener( 'keyup', onKeyUp, false );
-
   }
 
   initMouse() {
@@ -259,14 +192,6 @@ class Construct {
     this.glRenderer.shadowMap.enabled = true;
   }
 
-  initCSSRenderer() {
-    this.cssRenderer = new THREE.CSS3DRenderer();
-    this.cssRenderer.setSize(this.screenWidth, this.screenHeight);
-    this.cssRenderer.domElement.style.position = 'absolute';
-    this.cssRenderer.domElement.style.zIndex = 0;
-    this.cssRenderer.domElement.style.top = 0;
-  }
-
   initWebVR() {
     var self = this;
     var fullScreenButton = $('.full-screen')[0];
@@ -303,37 +228,28 @@ class Construct {
     Physijs.scripts.ammo = 'ammo.js';
   }
 
+  initCurrentUser() {
+    var userProgram = Programs.findOne({userId: Meteor.userId()});
+    var renderedUser = this.renderedObjects[userProgram._id].user;
+    var userControls = this.controls ? this.controls.getObject() : this.camera;
+    this.currentUser = new CurrentUser(
+      userProgram, renderedUser, userControls, Programs);
+  }
+
   render() {
     if (this.controls && !this.controls.enabled && Session.get('editorReady') && this.editor.isActive.get()) {
       this.objectSelector.selectObjects(this.scene, this.camera);
     }
 
     this.vrControls.update();
-    //    this.glRenderer.render(this.scene, this.camera);
-    //    this.cssRenderer.render(this.cssScene, this.camera);
     this.scene.simulate();
     this.vrEffect.render(this.scene, this.camera);
   }
 
   update() {
     this.updatePrograms();
-    var userCamera = this.controls ? this.controls.getObject() : this.camera;
-    var renderedUser = this.renderedObjects[this.userProgramId];
-    if (!renderedUser) {
-      return;
-    }
-    renderedUser = renderedUser.user;
-
-    if (ProgramHelpers.userProgramIsMoving(renderedUser)) {
-      console.log('user moving');
-      userCamera.position.copy(renderedUser.position);
-      _.throttle(() => {
-        Programs.update({_id: this.userProgramId}, {$set: {
-          position: renderedUser.position,
-          rotation: renderedUser.rotation
-        }});
-      }, 300)();
-    }
+    this.currentUser.updateMovement();
+    //this.updateUserMeshes;
   }
 
   updatePrograms() {
@@ -459,6 +375,14 @@ Template.position.helpers({
       return `${Math.round(userProgram.position.x)}, ${Math.round(userProgram.position.z)}, ${Math.round(userProgram.position.y)}`;
     } else {
       return 'position not found';
+    }
+  },
+  userRotation: () => {
+    var userProgram = Programs.findOne({type: 'user', userId: Meteor.userId()});
+    if (userProgram) {
+      return `${Math.round(radianToDegree(userProgram.rotation._x))}, ${Math.round(radianToDegree(userProgram.rotation._z))}, ${Math.round(radianToDegree(userProgram.rotation._y))}`;
+    } else {
+      return 'rotation not found';
     }
   }
 });
