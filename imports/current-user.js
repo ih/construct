@@ -98,12 +98,17 @@ export default class CurrentUser {
     var oneDegree = Math.PI / 180;
 
     if (this.rotateRight) {
-      this.controls.rotateY(-1 * oneDegree);
+      // use rotation.y instead of rotateY b/c the pointer control flips
+      // horizontally if you turn too far, why?
+      this.controls.rotation.y += -1 * oneDegree;
+      // use rotateY here instead of directly setting rotation.y b/c
+      // it gets stuck turning.  why?
       this.renderedMesh.rotateY(-1 * oneDegree);
     } else if (this.rotateLeft) {
-      this.controls.rotateY(1 * oneDegree);
+      this.controls.rotation.y += oneDegree;
       this.renderedMesh.rotateY(oneDegree);
     }
+    //this.controls.rotation.x = Math.max( - Math.PI / 2, Math.min( Math.PI / 2, this.controls.rotation.x ) );
     this.renderedMesh.setAngularVelocity(new THREE.Vector3(0, 0, 0));
     this.renderedMesh.__dirtyRotation = true;
     this.renderedMesh.__dirtyPosition = true;
