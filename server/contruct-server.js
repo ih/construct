@@ -161,21 +161,18 @@ Accounts.onCreateUser(function(options, user) {
     `
 (self) => {
   var geometry = new THREE.CubeGeometry(10, 10, 10);
+  // user mesh MUST be a physijs mesh
   var material = new Physijs.createMaterial(
     new THREE.MeshBasicMaterial({color: self.color}), 1, .9);
   var cube = new Physijs.BoxMesh(geometry, material);
-  cube.position.set(self.position.x, self.position.y, self.position.z);
-  cube.rotateX(self.rotation._x);
-  cube.rotateY(self.rotation._y);
-  cube.rotateZ(self.rotation._z);
   return {user: cube};
 }
     `,
     update:
     `
 (renderedObjects, self) => {
+  // movement for users is controlled server side
   var user = renderedObjects['user'];
-
 }
     `
   });

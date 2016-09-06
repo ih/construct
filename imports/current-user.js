@@ -74,8 +74,8 @@ export default class CurrentUser {
 
       _.throttle(() => {
         Programs.update({_id: this.program._id}, {$set: {
-          position: this.renderedMesh.position,
-          rotation: this.renderedMesh.rotation
+          position: this.renderedMesh.position.toArray(),
+          rotation: this.renderedMesh.rotation.toArray()
         }});
       }, 300)();
     }

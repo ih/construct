@@ -165,7 +165,7 @@ class Construct {
     if (havePointerLock) {
       this.controls = new THREE.PointerLockControls(this.camera);
       this.scene.add(this.controls.getObject());
-      this.controls.getObject().position.copy(
+      this.controls.getObject().position.fromArray(
         Programs.findOne(this.userProgramId).position);
     } else {
       console.warn('no pointerlock');
@@ -249,7 +249,22 @@ class Construct {
   update() {
     this.updatePrograms();
     this.currentUser.updateMovement();
-    //this.updateUserMeshes;
+    this.updateOtherUserMeshes();
+  }
+
+  updateOtherUserMeshes() {
+    Programs.find({type: 'user'}).forEach((userProgram) => {
+      if (userProgram._id === this.currentUser.program._id) {
+        return;
+      }
+      try {
+        var userMesh = this.renderedObjects[userProgram._id].user;
+        userMesh.position.fromArray(userProgram.position);
+        userMesh.rotation.fromArray(userProgram.rotation);
+      } catch (error) {
+        console.log('problem updating another user');
+      }
+    });
   }
 
   updatePrograms() {
@@ -283,11 +298,7 @@ class Construct {
     var newProgramId = Programs.insert({
       name: Meteor.user().username + ':' + (new Date()),
       imports: [],
-      position: {
-        x: newProgramPosition.x,
-        y: newProgramPosition.y,
-        z: newProgramPosition.z
-      },
+      position: newProgramPosition,
       contributors: [Meteor.user().username],
       man: `Your program's manual!  Add help info here`,
       initialize:
@@ -297,7 +308,7 @@ class Construct {
   var material = new THREE.MeshBasicMaterial({color: '#00FF00', wireframe: true});
   var position = self.position;
   var sphere = new THREE.Mesh(geometry, material);
-  sphere.position.set(position.x, position.y, position.z);
+  sphere.position.fromArray(position);
   return {placeholder: sphere};
 }
       `,
@@ -326,7 +337,7 @@ class Construct {
   var material = new THREE.MeshNormalMaterial();
   var position = Programs.findOne(this.userProgramId).position;
   var module = new THREE.Mesh(geometry, material);
-  module.position.set(position.x + 10, position.y, position.z);
+  module.position.fromArray(position);
   return {placeholder: module};
 }
       `,
@@ -372,7 +383,8 @@ Template.position.helpers({
   userPosition: () => {
     var userProgram = Programs.findOne({type: 'user', userId: Meteor.userId()});
     if (userProgram) {
-      return `${Math.round(userProgram.position.x)}, ${Math.round(userProgram.position.z)}, ${Math.round(userProgram.position.y)}`;
+      var position = new THREE.Vector3().fromArray(userProgram.position);
+      return `${Math.round(position.x)}, ${Math.round(position.z)}, ${Math.round(position.y)}`;
     } else {
       return 'position not found';
     }
@@ -380,7 +392,7 @@ Template.position.helpers({
   userRotation: () => {
     var userProgram = Programs.findOne({type: 'user', userId: Meteor.userId()});
     if (userProgram) {
-      return `${Math.round(radianToDegree(userProgram.rotation._x))}, ${Math.round(radianToDegree(userProgram.rotation._z))}, ${Math.round(radianToDegree(userProgram.rotation._y))}`;
+      return `${Math.round(radianToDegree(userProgram.rotation[0]))}, ${Math.round(radianToDegree(userProgram.rotation[2]))}, ${Math.round(radianToDegree(userProgram.rotation[1]))}`;
     } else {
       return 'rotation not found';
     }
