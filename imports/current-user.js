@@ -70,8 +70,6 @@ export default class CurrentUser {
 
   updateMovement() {
     if (this.isMoving(this.renderedMesh)) {
-      console.log('user moving');
-
       _.throttle(() => {
         Programs.update({_id: this.program._id}, {$set: {
           position: this.renderedMesh.position.toArray(),
