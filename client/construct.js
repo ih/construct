@@ -73,6 +73,24 @@ class Construct {
       }
     }, () => {console.log('problem in the autorun'); });
 
+    // kind of a hack to handle this event here
+    // but blaze doesn't allow for key events
+    // on non-input fields
+    $(document).keypress((event) => {
+      if (event.which === 101 && !self.editor.isActive.get()) {
+        self.activateEditor();
+      }
+    });
+  }
+
+  activateEditor() {
+    this.currentUser.movementDisabled = true;
+    this.editor.activate();
+  }
+
+  deactivateEditor() {
+    this.currentUser.movementDisabled = false;
+    this.editor.deactivate();
   }
 
   removeRenderedObjects(programId) {
@@ -431,7 +449,7 @@ Template.hud.onRendered(() => {
 
 Template.hud.events({
   'click .enable-mouse-view': () => {
-    construct.editor.deactivate();
+    construct.deactivateEditor();
     Session.set('mouseView', true);
     var element = $('.world')[0];
     element.requestPointerLock = (
@@ -440,10 +458,10 @@ Template.hud.events({
     element.requestPointerLock();
   },
   'click .open-editor': () => {
-    construct.editor.activate();
+    construct.activateEditor();
   },
   'click .close-editor': () => {
-    construct.editor.deactivate();
+    construct.deactivateEditor();
   },
   'click .create-program': () => {
     construct.createProgram();

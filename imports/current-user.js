@@ -11,13 +11,17 @@ export default class CurrentUser {
     this.initKeyboard();
     this.rotateRight = false;
     this.facingDirection = this.renderedMesh.getWorldDirection();
+    this.movementDisabled = false;
   }
 
   initKeyboard() {
     var self = this;
 
     var onKeyDown = (event) => {
-      switch ( event.keyCode ) {
+      if (self.movementDisabled) {
+        return;
+      }
+      switch (event.keyCode) {
       case 38: // up
       case 87: // w
         self.moveForward = true;
@@ -40,7 +44,7 @@ export default class CurrentUser {
     };
 
     var onKeyUp = (event) => {
-      switch( event.keyCode ) {
+      switch(event.keyCode) {
 
       case 38: // up
       case 87: // w
@@ -98,13 +102,13 @@ export default class CurrentUser {
     if (this.rotateRight) {
       // use rotation.y instead of rotateY b/c the pointer control flips
       // horizontally if you turn too far, why?
-      this.controls.rotation.y += -1 * oneDegree;
+      this.controls.rotation.y += -2 * oneDegree;
       // use rotateY here instead of directly setting rotation.y b/c
       // it gets stuck turning.  why?
-      this.renderedMesh.rotateY(-1 * oneDegree);
+      this.renderedMesh.rotateY(-2 * oneDegree);
     } else if (this.rotateLeft) {
-      this.controls.rotation.y += oneDegree;
-      this.renderedMesh.rotateY(oneDegree);
+      this.controls.rotation.y += 2 * oneDegree;
+      this.renderedMesh.rotateY(2 * oneDegree);
     }
     //this.controls.rotation.x = Math.max( - Math.PI / 2, Math.min( Math.PI / 2, this.controls.rotation.x ) );
     this.renderedMesh.setAngularVelocity(new THREE.Vector3(0, 0, 0));
