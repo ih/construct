@@ -1,14 +1,20 @@
 import Editor from '../imports/editor.js';
+import CurrentUser from '../imports/current-user.js';
 import ProgramHelpers from '../imports/program-helpers.js';
+import MathHelpers from '../imports/math-helpers.js';
 import Eval from '../imports/eval.js';
 
 var Programs = new Mongo.Collection('programs');
 // https://github.com/josdirksen/learning-threejs/blob/master/chapter-09/07-first-person-camera.html
 
+Session.set('editorReady', false);
+
 var construct = null;
 
 
 var MODULE = ProgramHelpers.MODULE;
+var USER = ProgramHelpers.USER;
+var radianToDegree = MathHelpers.radianToDegree;
 
 Accounts.ui.config({
   passwordSignupFields: 'USERNAME_AND_EMAIL'
@@ -33,21 +39,17 @@ class Construct {
     this.renderedObjects = {};
     // set by initPrograms
     this.userProgramId = null;
-
     this.initPrograms();
-    this.initKeyboard();
     this.initCamera();
     this.initMouse();
+    this.initCurrentUser();
     this.initGLRenderer();
-    //this.initCSSRenderer();
-    // in the future attach to $container
 
     this.initWebVR();
     this.initEvents();
     this.initEditor();
 
     this.$container.append(this.glRenderer.domElement);
-    //this.cssRenderer.domElement.appendChild(this.glRenderer.domElement);
     Session.set('constructReady', true);
   }
 
@@ -71,21 +73,45 @@ class Construct {
       }
     }, () => {console.log('problem in the autorun'); });
 
+    // kind of a hack to handle this event here
+    // but blaze doesn't allow for key events
+    // on non-input fields
+    $(document).keypress((event) => {
+      if (event.which === 101 && !self.editor.isActive.get()) {
+        self.activateEditor();
+      }
+    });
+  }
+
+  activateEditor() {
+    this.currentUser.movementDisabled = true;
+    this.editor.activate();
+  }
+
+  deactivateEditor() {
+    this.currentUser.movementDisabled = false;
+    this.editor.deactivate();
   }
 
   removeRenderedObjects(programId) {
     var self = this;
     _.each(self.renderedObjects[programId], (renderedObject) => {
-      self.scene.remove(renderedObject);
+      // since we store the update function in renderedObjects dictionary
+      // for a program
+      if (!_.isFunction(renderedObject)) {
+        self.scene.remove(renderedObject);
+      }
     });
+    delete self.renderedObjects[programId];
   }
 
   initPrograms() {
     var self = this;
 
     // observe to load any new programs that get created by other users
-    Programs.find().observe({
-      added: (program) => {
+    Programs.find().observeChanges({
+      added: (programId) => {
+        var program = Programs.findOne(programId);
         if (program.type && program.type === 'user' &&
             program.userId === Meteor.userId()) {
           self.userProgramId = program._id;
@@ -94,19 +120,24 @@ class Construct {
           self.initProgram(program);
         }
       },
-      changed: (updatedProgram, originalProgram) => {
-        self.removeRenderedObjects(updatedProgram._id);
+      changed: (programId, changedFields) => {
+        var updatedProgram = Programs.findOne(programId);
         if (updatedProgram.type === MODULE) {
           self.eval.evalModule(updatedProgram);
-        } else {
-          self.initProgram(updatedProgram);
         }
-        if (self.editor.isActive.get() && self.editor.program.get()._id === updatedProgram._id) {
-          self.editor.setProgram(updatedProgram);
+        // don't re-initialize a user's program for changes in movement
+        // since program is updated whenever a user is moving
+        else if (updatedProgram.type !== USER ||
+                 !ProgramHelpers.onlyMovementAttributes(_.keys(changedFields))) {
+          self.removeRenderedObjects(updatedProgram._id);
+          self.initProgram(updatedProgram);
+          if (self.editor.isActive.get() && self.editor.program.get()._id === updatedProgram._id) {
+            self.editor.setProgram(updatedProgram);
+          }
         }
       },
-      removed: (oldProgram) => {
-        self.removeRenderedObjects(oldProgram._id);
+      removed: (oldProgramId) => {
+        self.removeRenderedObjects(oldProgramId);
       }
     });
   }
@@ -120,89 +151,26 @@ class Construct {
       var programRenderedObjects = initializeProgram(
         program, self.renderedObjects);
 
-      _.each(programRenderedObjects, (renderedObject) => {
-        renderedObject.programId = program._id;
-        self.scene.add(renderedObject);
-      });
-
       programRenderedObjects.updateProgram = eval(program.update);
 
+      _.each(programRenderedObjects, (renderedObject) => {
+        if (!_.isFunction(renderedObject)) {
+          renderedObject.programId = program._id;
+          self.scene.add(renderedObject);
+        }
+      });
+
       self.renderedObjects[program._id] = programRenderedObjects;
+      if (program._id === self.currentUser.program._id) {
+        self.currentUser.renderedMesh = programRenderedObjects.user;
+
+      }
+
     } catch (error) {
       var errorString = error.message;
       console.warn(
         `Problem initializing program ${program._id}: ${errorString}`);
     }
-  }
-
-  initKeyboard() {
-    var self = this;
-
-    var onKeyUp = (event) => {
-      switch( event.keyCode ) {
-
-      case 38: // up
-      case 87: // w
-        self.moveForward = false;
-        break;
-
-      case 37: // left
-      case 65: // a
-        self.moveLeft = false;
-        break;
-
-      case 40: // down
-      case 83: // s
-        self.moveBackward = false;
-        break;
-
-      case 39: // right
-      case 68: // d
-        self.moveRight = false;
-        break;
-      }
-    };
-
-    var onKeyDown = (event) => {
-      if (event.keyCode === 69 && !self.editor.isActive.get() && !self.controls.enabled) {
-        self.editor.toggle();
-        if (!self.editor.isActive.get()) {
-          self.objectSelector.unselectAll();
-
-        }
-        return;
-      } else if (self.editor.isActive.get()) {
-        return;
-      }
-
-      switch ( event.keyCode ) {
-      case 67:
-        self.createProgram();
-        break;
-      case 38: // up
-      case 87: // w
-        self.moveForward = true;
-        break;
-
-      case 37: // left
-      case 65: // a
-        self.moveLeft = true; break;
-
-      case 40: // down
-      case 83: // s
-        self.moveBackward = true;
-        break;
-
-      case 39: // right
-      case 68: // d
-        self.moveRight = true;
-        break;
-      }
-    };
-
-    document.addEventListener( 'keydown', onKeyDown, false );
-    document.addEventListener( 'keyup', onKeyUp, false );
-
   }
 
   initMouse() {
@@ -215,7 +183,7 @@ class Construct {
     if (havePointerLock) {
       this.controls = new THREE.PointerLockControls(this.camera);
       this.scene.add(this.controls.getObject());
-      this.controls.getObject().position.copy(
+      this.controls.getObject().position.fromArray(
         Programs.findOne(this.userProgramId).position);
     } else {
       console.warn('no pointerlock');
@@ -240,14 +208,6 @@ class Construct {
     this.glRenderer.setClearColor( 0xffffff );
     this.glRenderer.setSize(this.screenWidth, this.screenHeight);
     this.glRenderer.shadowMap.enabled = true;
-  }
-
-  initCSSRenderer() {
-    this.cssRenderer = new THREE.CSS3DRenderer();
-    this.cssRenderer.setSize(this.screenWidth, this.screenHeight);
-    this.cssRenderer.domElement.style.position = 'absolute';
-    this.cssRenderer.domElement.style.zIndex = 0;
-    this.cssRenderer.domElement.style.top = 0;
   }
 
   initWebVR() {
@@ -286,44 +246,43 @@ class Construct {
     Physijs.scripts.ammo = 'ammo.js';
   }
 
+  initCurrentUser() {
+    var userProgram = Programs.findOne({userId: Meteor.userId()});
+    var renderedUser = this.renderedObjects[userProgram._id].user;
+    var userControls = this.controls ? this.controls.getObject() : this.camera;
+    this.currentUser = new CurrentUser(
+      userProgram, renderedUser, userControls, Programs);
+  }
+
   render() {
     if (this.controls && !this.controls.enabled && Session.get('editorReady') && this.editor.isActive.get()) {
       this.objectSelector.selectObjects(this.scene, this.camera);
     }
 
     this.vrControls.update();
-    //    this.glRenderer.render(this.scene, this.camera);
-    //    this.cssRenderer.render(this.cssScene, this.camera);
-    this.vrEffect.render(this.scene, this.camera);
     this.scene.simulate();
+    this.vrEffect.render(this.scene, this.camera);
   }
 
   update() {
-    var delta = 1;
-
     this.updatePrograms();
+    this.currentUser.updateMovement();
+    this.updateOtherUserMeshes();
+  }
 
-    var user = this.controls ? this.controls.getObject() : this.camera;
-
-    if (this.moveForward) {
-      user.translateZ(-delta);
-    }
-    if (this.moveBackward) {
-      user.translateZ(delta);
-    }
-
-    if (this.moveLeft) {
-      user.translateX(-delta);
-    }
-    if (this.moveRight) {
-      user.translateX(delta);
-    }
-
-    if (this.moveForward || this.moveBackward || this.moveLeft ||
-        this.moveRight) {
-      Programs.update({_id: this.userProgramId}, {$set: {
-        position: user.position}});
-    }
+  updateOtherUserMeshes() {
+    Programs.find({type: 'user'}).forEach((userProgram) => {
+      if (userProgram._id === this.currentUser.program._id) {
+        return;
+      }
+      try {
+        var userMesh = this.renderedObjects[userProgram._id].user;
+        userMesh.position.fromArray(userProgram.position);
+        userMesh.rotation.fromArray(userProgram.rotation);
+      } catch (error) {
+        console.log('problem updating another user');
+      }
+    });
   }
 
   updatePrograms() {
@@ -339,7 +298,9 @@ class Construct {
         var updatedFields = updateProgram(
           self.renderedObjects[program._id], program, self.renderedObjects);
         if (updatedFields) {
-          Programs.update({_id: program._id}, {$set: updatedFields});
+          _.throttle(() => {
+            Programs.update({_id: program._id}, {$set: updatedFields});
+          }, 300)();
         }
       } catch (error) {
         var errorString = error.message;
@@ -355,11 +316,7 @@ class Construct {
     var newProgramId = Programs.insert({
       name: Meteor.user().username + ':' + (new Date()),
       imports: [],
-      position: {
-        x: newProgramPosition.x,
-        y: newProgramPosition.y,
-        z: newProgramPosition.z
-      },
+      position: newProgramPosition,
       contributors: [Meteor.user().username],
       man: `Your program's manual!  Add help info here`,
       initialize:
@@ -369,7 +326,7 @@ class Construct {
   var material = new THREE.MeshBasicMaterial({color: '#00FF00', wireframe: true});
   var position = self.position;
   var sphere = new THREE.Mesh(geometry, material);
-  sphere.position.set(position.x, position.y, position.z);
+  sphere.position.fromArray(position);
   return {placeholder: sphere};
 }
       `,
@@ -398,7 +355,7 @@ class Construct {
   var material = new THREE.MeshNormalMaterial();
   var position = Programs.findOne(this.userProgramId).position;
   var module = new THREE.Mesh(geometry, material);
-  module.position.set(position.x + 10, position.y, position.z);
+  module.position.fromArray(position);
   return {placeholder: module};
 }
       `,
@@ -432,8 +389,8 @@ Template.construct.onRendered(() => {
     construct.render();
     function animate() {
       requestAnimationFrame(animate);
-      construct.render();
       construct.update();
+      construct.render();
     }
     animate();
   });
@@ -444,9 +401,18 @@ Template.position.helpers({
   userPosition: () => {
     var userProgram = Programs.findOne({type: 'user', userId: Meteor.userId()});
     if (userProgram) {
-      return `${Math.round(userProgram.position.x)}, ${Math.round(userProgram.position.z)}, ${Math.round(userProgram.position.y)}`;
+      var position = new THREE.Vector3().fromArray(userProgram.position);
+      return `${Math.round(position.x)}, ${Math.round(position.z)}, ${Math.round(position.y)}`;
     } else {
       return 'position not found';
+    }
+  },
+  userRotation: () => {
+    var userProgram = Programs.findOne({type: 'user', userId: Meteor.userId()});
+    if (userProgram) {
+      return `${Math.round(radianToDegree(userProgram.rotation[0]))}, ${Math.round(radianToDegree(userProgram.rotation[2]))}, ${Math.round(radianToDegree(userProgram.rotation[1]))}`;
+    } else {
+      return 'rotation not found';
     }
   }
 });
@@ -483,7 +449,7 @@ Template.hud.onRendered(() => {
 
 Template.hud.events({
   'click .enable-mouse-view': () => {
-    construct.editor.deactivate();
+    construct.deactivateEditor();
     Session.set('mouseView', true);
     var element = $('.world')[0];
     element.requestPointerLock = (
@@ -492,10 +458,10 @@ Template.hud.events({
     element.requestPointerLock();
   },
   'click .open-editor': () => {
-    construct.editor.activate();
+    construct.activateEditor();
   },
   'click .close-editor': () => {
-    construct.editor.deactivate();
+    construct.deactivateEditor();
   },
   'click .create-program': () => {
     construct.createProgram();
@@ -529,6 +495,8 @@ Template.editor.events({
     construct.editor.setActiveSection(construct.editor.ATTRIBUTES);
   },
   'click .delete-program': () => {
+    // there is an observeChanges on Programs that removes the rendered
+    // objects when the document is removed
     construct.editor.deleteProgram();
   },
   'click .copy-program': () => {

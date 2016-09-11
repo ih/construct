@@ -4,7 +4,7 @@ Programs = new Mongo.Collection('programs');
 // add man property to programs
 Migrations.add({
   version: 1,
-  up: function() {
+  up: () => {
     Programs.find().forEach(function (program) {
       console.log('migration for adding man field to programs');
       Programs.update(program._id, {$set: {man: 'Your program\'s manual!  Add help info here'}});
@@ -15,7 +15,7 @@ Migrations.add({
 // make names unique
 Migrations.add({
   version: 2,
-  up: function() {
+  up: () => {
     var names = {};
     Programs.find().forEach(function (program) {
       console.log('migration for making names unique');
@@ -31,7 +31,7 @@ Migrations.add({
 // add import field to all programs
 Migrations.add({
   version: 3,
-  up: function() {
+  up: () => {
     Programs.find().forEach(function (program) {
       console.log('migration for adding import field to all programs');
       Programs.update(program._id, {$set: {imports: []}});
@@ -39,6 +39,60 @@ Migrations.add({
   }
 });
 
+// change position to be arrays
+Migrations.add({
+  version: 4,
+  up: () => {
+    Programs.find({position: {$exists: true}}).forEach(function (program) {
+      console.log('migration for changing position and rotation into an array');
+      Programs.update(
+        program._id,
+        {
+          $set: {position: [
+            Math.random() * 100,
+            10,
+            Math.random() * 100
+          ]}
+        });
+    });
+  }
+});
+
+// change users to have a physijs mesh and add a rotation field
+Migrations.add({
+  version: 5,
+  up: () => {
+    Programs.find({type: 'user'}).forEach(function (program) {
+      console.log('migration for adding user physics');
+      Programs.update(
+        program._id,
+        {
+          $set: {
+            initialize:
+            `
+(self) => {
+  var geometry = new THREE.CubeGeometry(10, 10, 10);
+  // user mesh MUST be a physijs mesh
+  var material = new Physijs.createMaterial(
+    new THREE.MeshBasicMaterial({color: self.color}), .8, .2);
+  var cube = new Physijs.BoxMesh(geometry, material);
+  cube.position.fromArray(self.position);
+  return {user: cube};
+}
+            `,
+            update:
+            `
+(renderedObjects, self) => {
+  // movement for users is controlled server side
+  var user = renderedObjects['user'];
+}
+            `,
+            rotation: [0, 0, 0]
+          }
+        });
+    });
+  }
+});
 
 Programs.allow({
   insert: function (userId, doc) {
@@ -63,21 +117,17 @@ Meteor.startup(function () {
   if (Programs.find().count() === 0) {
     console.log('adding init program');
     Programs.insert({
-      position: {
-        x: -200,
-        y: 100,
-        z: -100
-      },
+      position: [0, 100, 0],
       name: 'Sample Program',
       man: 'This is the man page.  You can put information here that tells what the program is about and how to use it.',
+      contributors: ['architect'],
       initialize:
       `
 (self) => {
   var geometry = new THREE.CubeGeometry(100, 100, 100);
   var material = new THREE.MeshBasicMaterial({color: '#00ff00'});
-  var position = self.position;
   var cube = new THREE.Mesh(geometry, material);
-  cube.position.set(position.x, position.y, position.z);
+  cube.position.fromArray(self.position);
   cube.direction = 1;
   return {cube: cube};
 }
@@ -92,9 +142,38 @@ Meteor.startup(function () {
     cube.direction = 1;
   }
   cube.position.x += cube.direction;
-  self.position.x += cube.direction;
+  self.position[0] += cube.direction;
 }
       `
+    });
+
+    Programs.insert({
+      position: [0, -1, 0],
+      name: 'Floor',
+      man: 'This is the floor',
+      contributors: ['architect'],
+      initialize:
+      `
+(self) => {
+  var floorGeometry = new THREE.CubeGeometry(10000, 1, 1000);
+  var texture = THREE.ImageUtils.loadTexture( 'checkerboard.jpg' );
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set( 10, 10 );
+  var material = Physijs.createMaterial(new THREE.MeshBasicMaterial(
+    {map: texture, side: THREE.DoubleSide}), 1, 0);
+  var position = self.position;
+  var floor = new Physijs.BoxMesh(floorGeometry, material, 0);
+  floor.position.fromArray(position);
+  return {floor: floor};
+}
+      `,
+      update:
+      `
+(renderedObjects, self) => {
+  var floor = renderedObjects['floor'];
+}
+      `
+
     });
   }
   if (Meteor.users.find().count() === 0) {
@@ -114,11 +193,8 @@ Accounts.onCreateUser(function(options, user) {
     type: 'user',
     name: user.username,
     userId: user._id,
-    position: {
-      x: 0,
-      y: 5,
-      z: 0
-    },
+    position: [0, 10, 0],
+    rotation: [0, 0, 0],
     man: 'Your program\'s manual!  Add help info here',
     color: Utility.randomColor(),
     contributors: [user.username],
@@ -126,23 +202,18 @@ Accounts.onCreateUser(function(options, user) {
     `
 (self) => {
   var geometry = new THREE.CubeGeometry(10, 10, 10);
-  var material = new THREE.MeshBasicMaterial({color: self.color});
-  var position = self.position;
-  var cube = new THREE.Mesh(geometry, material);
-  cube.position.set(position.x, position.y, position.z);
+  // user mesh MUST be a physijs mesh
+  var material = new Physijs.createMaterial(
+    new THREE.MeshBasicMaterial({color: self.color}), .8, .2);
+  var cube = new Physijs.BoxMesh(geometry, material);
   return {user: cube};
 }
     `,
     update:
     `
 (renderedObjects, self) => {
+  // movement for users is controlled server side
   var user = renderedObjects['user'];
-  var deltaX = self.position.x - user.position.x;
-  var deltaY = self.position.y - user.position.y;
-  var deltaZ = self.position.z - user.position.z;
-  user.translateX(deltaX);
-  user.translateY(deltaY);
-  user.translateZ(deltaZ);
 }
     `
   });

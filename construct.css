@@ -34,6 +34,14 @@ canvas {
     color: black;
 }
 
+.user-rotation {
+    position: fixed;
+    top: 30px;
+    left: 50%;
+    z-index: 100;
+    color: red;
+}
+
 #login-buttons {
     z-index: 1000;
     position: fixed;

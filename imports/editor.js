@@ -1,3 +1,5 @@
+import ProgramHelpers from '../imports/program-helpers.js';
+
 var Programs;
 
 export default class Editor {
@@ -13,11 +15,15 @@ export default class Editor {
     self.UPDATE = 'update';
     self.MODULE_CODE = 'code';
     self.CODE_ATTRIBUTES = [self.INITIALIZE, self.UPDATE, self.MODULE_CODE];
+    self.UNDISPLAYED_ATTRIBUTES = _.union(self.CODE_ATTRIBUTES, [
+      '_id']);
+    self.UNUPDATEABLE_ATTRIBUTES_FOR_USER = _.union(
+      self.UNDISPLAYED_ATTRIBUTES, ['position', 'rotation']);
     self.ATTRIBUTES = 'attributes';
     // used to determine what can be thrown away
     self.REQUIRED_PROPERTIES = _.union(
       self.CODE_ATTRIBUTES, [
-        'position', 'contributors', 'man', 'name', 'ancestry']);
+        'position', 'rotation', 'contributors', 'man', 'name', 'ancestry']);
 
     self.isActive = new ReactiveVar(false);
     self.isLoaded = false;
@@ -45,7 +51,13 @@ export default class Editor {
           var updateObject = {};
           if (activeSection === self.ATTRIBUTES) {
             var removeFields = {};
-            updateFields = _.omit(JSON.parse(newProgramValue), '_id');
+            // don't update things like _id if they're present
+            // (e.g. if a user types them in manually)
+            var unUpdateableFieldNames = program.type === ProgramHelpers.USER ?
+              self.UNUPDATEABLE_ATTRIBUTES_FOR_USER :
+              self.UNDISPLAYED_ATTRIBUTES;
+            updateFields = _.omit(
+              JSON.parse(newProgramValue), unUpdateableFieldNames);
             var fieldNamesToRemove = _.difference(
               _.keys(_.omit(program, '_id')), _.keys(updateFields));
             fieldNamesToRemove = _.difference(
@@ -89,7 +101,8 @@ export default class Editor {
       if (program === undefined) {
         self.setValue(self.defaultText());
       } else if (activeSection === self.ATTRIBUTES) {
-        var attributes = _.omit(program, self.CODE_ATTRIBUTES.concat(['_id']));
+        var attributesToRemove = self.UNDISPLAYED_ATTRIBUTES;
+        var attributes = _.omit(program, attributesToRemove);
         self.setValue(JSON.stringify(attributes, null, 2));
       } else {
         self.setValue(program[activeSection]);
