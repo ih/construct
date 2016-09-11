@@ -279,6 +279,8 @@ class Construct {
         var userMesh = this.renderedObjects[userProgram._id].user;
         userMesh.position.fromArray(userProgram.position);
         userMesh.rotation.fromArray(userProgram.rotation);
+        userMesh.__dirtyRotation = true;
+        userMesh.__dirtyPosition = true;
       } catch (error) {
         console.log('problem updating another user');
       }
