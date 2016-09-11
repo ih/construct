@@ -93,6 +93,25 @@ Migrations.add({
   }
 });
 
+// change the init function for programs to use new position format
+Migrations.add({
+  version: 6,
+  up: () => {
+    Programs.find({type: 'user'}).forEach(function (program) {
+      console.log('changing position code for programs');
+      var newInitialize = program.initialize.replace(
+        'position.set(position.x, position.y, position.z)', 'position.fromArray(position)');
+      Programs.update(
+        program._id,
+        {
+          $set: {
+            initialize: newInitialize
+          }
+        });
+    });
+  }
+});
+
 
 Programs.allow({
   insert: function (userId, doc) {

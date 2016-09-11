@@ -136,8 +136,8 @@ class Construct {
           }
         }
       },
-      removed: (oldProgram) => {
-        self.removeRenderedObjects(oldProgram._id);
+      removed: (oldProgramId) => {
+        self.removeRenderedObjects(oldProgramId);
       }
     });
   }
@@ -495,6 +495,8 @@ Template.editor.events({
     construct.editor.setActiveSection(construct.editor.ATTRIBUTES);
   },
   'click .delete-program': () => {
+    // there is an observeChanges on Programs that removes the rendered
+    // objects when the document is removed
     construct.editor.deleteProgram();
   },
   'click .copy-program': () => {
