@@ -43,15 +43,15 @@ Migrations.add({
 Migrations.add({
   version: 4,
   up: () => {
-    Programs.find().forEach(function (program) {
+    Programs.find({position: {$exists: true}}).forEach(function (program) {
       console.log('migration for changing position and rotation into an array');
       Programs.update(
         program._id,
         {
           $set: {position: [
-            program.position.x,
-            program.position.y,
-            program.position.z
+            Math.random() * 100,
+            10,
+            Math.random() * 100
           ]}
         });
     });
@@ -76,6 +76,7 @@ Migrations.add({
   var material = new Physijs.createMaterial(
     new THREE.MeshBasicMaterial({color: self.color}), .8, .2);
   var cube = new Physijs.BoxMesh(geometry, material);
+  cube.position.fromArray(self.position);
   return {user: cube};
 }
             `,
@@ -92,26 +93,6 @@ Migrations.add({
     });
   }
 });
-
-// change the init function for programs to use new position format
-Migrations.add({
-  version: 6,
-  up: () => {
-    Programs.find({type: 'user'}).forEach(function (program) {
-      console.log('changing position code for programs');
-      var newInitialize = program.initialize.replace(
-        'position.set(position.x, position.y, position.z)', 'position.fromArray(position)');
-      Programs.update(
-        program._id,
-        {
-          $set: {
-            initialize: newInitialize
-          }
-        });
-    });
-  }
-});
-
 
 Programs.allow({
   insert: function (userId, doc) {
