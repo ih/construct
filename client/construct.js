@@ -3,6 +3,8 @@ import CurrentUser from '../imports/current-user.js';
 import ProgramHelpers from '../imports/program-helpers.js';
 import MathHelpers from '../imports/math-helpers.js';
 import Eval from '../imports/eval.js';
+import RTC from '../imports/rtc.js';
+import Adapter from 'webrtc-adapter';
 
 var Programs = new Mongo.Collection('programs');
 // https://github.com/josdirksen/learning-threejs/blob/master/chapter-09/07-first-person-camera.html
@@ -252,6 +254,9 @@ class Construct {
     var userControls = this.controls ? this.controls.getObject() : this.camera;
     this.currentUser = new CurrentUser(
       userProgram, renderedUser, userControls, Programs);
+
+    // connect user to peers for real time communication (RTC)
+    //this.rtc = new RTC(userProgram._id);
   }
 
   render() {

@@ -1,5 +1,16 @@
 Programs = new Mongo.Collection('programs');
-//Programs._collection._ensureIndex({name: 1}, {unique: true});
+Programs._collection._ensureIndex({name: 1}, {unique: true});
+Heartbeats = new Mongo.Collection('heartbeats');
+Heartbeats._collection._ensureIndex({userId: 1}, {unique: true});
+
+Meteor.methods({
+  heartbeat: () => {
+    var userId = Meteor.user()._id;
+    console.log(`pulse ${userId}`);
+    Programs.update({userId: userId}, {$set: {online: true}});
+    Heartbeats.upsert({userId: userId}, {$set: {lastUpdated: Date.now(), userId: userId}});
+  }
+});
 
 // add man property to programs
 Migrations.add({
@@ -114,6 +125,19 @@ Meteor.publish('all-programs', function () {
 
 Meteor.startup(function () {
   Migrations.migrateTo('latest');
+
+  // set any users to offline if there is no recent heartbeat
+  Meteor.setInterval(() => {
+    console.log('checking for dead programs');
+    Programs.find({type: 'user', online: true}).forEach((userProgram) => {
+      var lastHeartbeat = Heartbeats.findOne({userId: userProgram.userId}).lastUpdated;
+      if (Date.now() - lastHeartbeat > 25000) {
+        console.log(`turning ${userProgram.userId} off`);
+        Programs.update(userProgram._id, {$set: {online: false}});
+      }
+    });
+  }, 25000);
+
   if (Programs.find().count() === 0) {
     console.log('adding init program');
     Programs.insert({

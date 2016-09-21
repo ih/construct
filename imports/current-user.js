@@ -12,6 +12,9 @@ export default class CurrentUser {
     this.rotateRight = false;
     this.facingDirection = this.renderedMesh.getWorldDirection();
     this.movementDisabled = false;
+
+    // heartbeat is used to update who is online
+    setInterval(() => {Meteor.call('heartbeat');}, 5000);
   }
 
   initKeyboard() {
