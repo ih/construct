@@ -2,6 +2,30 @@ Programs = new Mongo.Collection('programs');
 Programs._collection._ensureIndex({name: 1}, {unique: true});
 Heartbeats = new Mongo.Collection('heartbeats');
 Heartbeats._collection._ensureIndex({userId: 1}, {unique: true});
+RTCSetupMessages = new Mongo.Collection('rtcsetupmessages');
+RTCSetupMessages._collection._ensureIndex({sender: 1, receiver: 1});
+
+// TODO be more restrictive on the allow
+RTCSetupMessages.allow({
+  insert: function (userId, doc) {
+    return true;
+  },
+  remove: function (userId, doc) {
+    return true;
+  }
+});
+
+Meteor.publish('incoming-messages', function(receiver) {
+  return RTCSetupMessages.find({receiver: receiver});
+});
+
+// if a user is offline no need to track their RTC setup messages
+Programs.find({type: 'user', online: false}).observeChanges({
+  added: (id, fields) => {
+    console.log(`deleting rtc setup messages for ${id}`);
+    RTCSetupMessages.remove({$or: [{receiver: id}, {sender: id}]});
+  }
+});
 
 Meteor.methods({
   heartbeat: () => {
@@ -122,6 +146,7 @@ Programs.allow({
 Meteor.publish('all-programs', function () {
   return Programs.find();
 });
+
 
 Meteor.startup(function () {
   Migrations.migrateTo('latest');

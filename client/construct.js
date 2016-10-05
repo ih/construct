@@ -4,7 +4,6 @@ import ProgramHelpers from '../imports/program-helpers.js';
 import MathHelpers from '../imports/math-helpers.js';
 import Eval from '../imports/eval.js';
 import RTC from '../imports/rtc.js';
-import Adapter from 'webrtc-adapter';
 
 var Programs = new Mongo.Collection('programs');
 // https://github.com/josdirksen/learning-threejs/blob/master/chapter-09/07-first-person-camera.html
@@ -163,15 +162,10 @@ class Construct {
       });
 
       self.renderedObjects[program._id] = programRenderedObjects;
-      if (program._id === self.currentUser.program._id) {
-        self.currentUser.renderedMesh = programRenderedObjects.user;
-
-      }
-
     } catch (error) {
       var errorString = error.message;
       console.warn(
-        `Problem initializing program ${program._id}: ${errorString}`);
+        `Problem initializing program ${program.name}: ${errorString}`);
     }
   }
 
@@ -202,10 +196,6 @@ class Construct {
 
   initGLRenderer() {
     this.glRenderer = new THREE.WebGLRenderer( {antialias: true, alpha: true});
-    // } else {
-    //   this.glRenderer = new THREE.CanvasRenderer();
-    // }
-    //this.glRenderer.setSize(this.screenWidth, this.screenHeight);
     this.glRenderer.setPixelRatio(window.devicePixelRatio);
     this.glRenderer.setClearColor( 0xffffff );
     this.glRenderer.setSize(this.screenWidth, this.screenHeight);
@@ -256,7 +246,7 @@ class Construct {
       userProgram, renderedUser, userControls, Programs);
 
     // connect user to peers for real time communication (RTC)
-    //this.rtc = new RTC(userProgram._id);
+    this.rtc = new RTC.setupPeerConnections(userProgram._id, Programs);
   }
 
   render() {
