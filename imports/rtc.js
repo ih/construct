@@ -7,6 +7,7 @@ var peerConnections = {};
 var audio = null;
 var audioSendTrack = null;
 var started = false;
+var userProgramId;
 
 var configuration = {
   'iceServers': [
@@ -29,6 +30,7 @@ var configuration = {
 // from the spec https://www.w3.org/TR/webrtc/#simple-peer-to-peer-example-with-warm-up
 function connect(sender, receiver) {
   var peerConnection = new RTCPeerConnection(configuration);
+  peerConnections[receiver] = peerConnection;
 
   // send any ice candidates to the other peer
   peerConnection.onicecandidate = function (evt) {
@@ -63,16 +65,53 @@ function connect(sender, receiver) {
     // change to addTrack when browser supports it
     peerConnection.addStream(stream);
   }).catch(logError);
+
+  return peerConnection;
 }
 
 // listen to incoming requests to connect
 function listen(receiver) {
   Meteor.subscribe('incoming-messages', receiver);
-  // since the subscription only gets messages w/ receiver as receiver
+  // since the subscription only gets messages w/
+  // the current user (userProgramId) as receiver
   // we do a general find here
   RTCSetupMessages.find().observe({
     added: (message) => {
       console.log('message received');
+      var peerConnection = peerConnections[message.sender];
+      // if there is no peer connection with the sender create one
+      // we are the answerer
+      if (!peerConnection) {
+        peerConnection = connect(message.receiver, message.sender);
+      }
+      // the message is either an SDP or an ICE candidate
+      if (message.description) {
+        var description = JSON.parse(message.description);
+        if (description.type === 'offer') {
+          console.log('processing offer');
+          peerConnection.setRemoteDescription(description).then(() => {
+            return peerConnection.createAnswer();
+          }).then(function (answer) {
+            return peerConnection.setLocalDescription(answer);
+          }).then(function () {
+            console.log('sending answer');
+            RTCSetupMessages.insert({
+              sender: message.receiver,
+              receiver: message.sender,
+              description: JSON.stringify(peerConnection.localDescription)
+            });
+          }).catch(logError);
+        } else if (description.type == "answer") {
+          console.log('processing answer');
+          peerConnection.setRemoteDescription(description).catch(logError);
+        } else {
+          console.log("Unsupported SDP type.");
+        }
+      } else {
+        console.log('adding ice candidate');
+        var candidate = JSON.parse(message.candidate);
+        peerConnection.addIceCandidate(candidate).catch(logError);
+      }
     }
   });
 }
@@ -80,7 +119,7 @@ function listen(receiver) {
 export function setupPeerConnections(userProgramId, ProgramsCollection) {
   var self = this;
   Programs = ProgramsCollection;
-  self.userProgramId = userProgramId;
+  userProgramId = userProgramId;
 
   // listen for users who get online trying to connect
   listen(userProgramId);
@@ -94,5 +133,5 @@ export function setupPeerConnections(userProgramId, ProgramsCollection) {
 }
 
 function logError(error) {
-    log(error.name + ": " + error.message);
+    console.log(error.name + ": " + error.message);
 }

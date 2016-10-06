@@ -162,6 +162,10 @@ class Construct {
       });
 
       self.renderedObjects[program._id] = programRenderedObjects;
+      if (self.currentUser && program._id === self.currentUser.program._id) {
+        self.currentUser.renderedMesh = programRenderedObjects.user;
+
+      }
     } catch (error) {
       var errorString = error.message;
       console.warn(
