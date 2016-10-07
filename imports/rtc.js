@@ -33,7 +33,7 @@ function connect(sender, receiver) {
   peerConnections[receiver] = peerConnection;
 
   // send any ice candidates to the other peer
-  peerConnection.onicecandidate = function (evt) {
+  peerConnection.onicecandidate = (evt) => {
     // delete messages for a user when they go offline
     RTCSetupMessages.insert({
       sender: sender,
@@ -43,10 +43,10 @@ function connect(sender, receiver) {
   };
 
   // let the "negotiationneeded" event trigger offer generation
-  peerConnection.onnegotiationneeded = function () {
-    peerConnection.createOffer().then(function (offer) {
+  peerConnection.onnegotiationneeded = () => {
+    peerConnection.createOffer().then((offer) => {
       return peerConnection.setLocalDescription(offer);
-    }).then(function () {
+    }).then(() => {
       // send the offer to the other peer
       RTCSetupMessages.insert({
         sender: sender,
@@ -56,11 +56,19 @@ function connect(sender, receiver) {
     }).catch(logError);
   };
 
+  peerConnection.onaddstream = (event) => {
+    var stream = event.stream;
+    console.log('stream added');
+    var audio = document.querySelector('audio');
+    window.stream = stream; // make variable available to browser console
+    audio.srcObject = stream;
+  };
+
   // get a local stream, show it in a self-view and add it to be sent
   navigator.mediaDevices.getUserMedia({
     audio: true,
     video: false
-  }).then(function (stream) {
+  }).then((stream) => {
     // addTrack triggers negotiationneeded event
     // change to addTrack when browser supports it
     peerConnection.addStream(stream);
@@ -91,9 +99,9 @@ function listen(receiver) {
           console.log('processing offer');
           peerConnection.setRemoteDescription(description).then(() => {
             return peerConnection.createAnswer();
-          }).then(function (answer) {
+          }).then((answer) => {
             return peerConnection.setLocalDescription(answer);
-          }).then(function () {
+          }).then(() => {
             console.log('sending answer');
             RTCSetupMessages.insert({
               sender: message.receiver,
