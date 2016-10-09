@@ -29,3 +29,4 @@ standard-minifier-css@1.2.0
 standard-minifier-js@1.2.0
 percolate:migrations
 shell-server
+force-ssl

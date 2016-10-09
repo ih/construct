@@ -3,11 +3,8 @@ import Adapter from 'webrtc-adapter';
 var RTCSetupMessages = new Mongo.Collection('rtcsetupmessages');
 
 var Programs;
+// keys are other user program ids the current user is connected to
 var peerConnections = {};
-var audio = null;
-var audioSendTrack = null;
-var started = false;
-var userProgramId;
 
 var configuration = {
   'iceServers': [
@@ -27,10 +24,8 @@ var configuration = {
   ]
 };
 
-// from the spec https://www.w3.org/TR/webrtc/#simple-peer-to-peer-example-with-warm-up
-function connect(sender, receiver) {
+function makePeerConnection(sender, receiver) {
   var peerConnection = new RTCPeerConnection(configuration);
-  peerConnections[receiver] = peerConnection;
 
   // send any ice candidates to the other peer
   peerConnection.onicecandidate = (evt) => {
@@ -42,8 +37,36 @@ function connect(sender, receiver) {
     });
   };
 
-  // let the "negotiationneeded" event trigger offer generation
-  peerConnection.onnegotiationneeded = () => {
+  peerConnection.onaddstream = (event) => {
+    var stream = event.stream;
+    console.log('stream added');
+    var audio = document.querySelector('audio');
+    window.stream = stream; // make variable available to browser console
+    audio.srcObject = stream;
+  };
+
+  peerConnection.oniceconnectionstatechange = (event) => {
+    console.log(`ice connection state: ${event.target.iceConnectionState}`);
+  };
+
+  return peerConnection;
+}
+
+// from https://www.w3.org/TR/webrtc/#simple-peer-to-peer-example
+// and https://github.com/borismus/copresence-vr/blob/9dbe210f1d8e5cdba5bafaeacf0628de86293e2b/src/peer-connection-rtc.js#L55
+// and https://mdn.mozillademos.org/files/12363/WebRTC%20-%20Signaling%20Diagram.svg
+function connect(sender, receiver) {
+  var peerConnection = makePeerConnection(sender, receiver);
+  peerConnections[receiver] = peerConnection;
+
+  // get a local stream, show it in a self-view and add it to be sent
+  navigator.mediaDevices.getUserMedia({
+    audio: true,
+    video: false
+  }).then((stream) => {
+    // addTrack triggers negotiationneeded event
+    // change to addTrack when browser supports it
+    peerConnection.addStream(stream);
     peerConnection.createOffer().then((offer) => {
       return peerConnection.setLocalDescription(offer);
     }).then(() => {
@@ -54,70 +77,61 @@ function connect(sender, receiver) {
         description: JSON.stringify(peerConnection.localDescription)
       });
     }).catch(logError);
-  };
-
-  peerConnection.onaddstream = (event) => {
-    var stream = event.stream;
-    console.log('stream added');
-    var audio = document.querySelector('audio');
-    window.stream = stream; // make variable available to browser console
-    audio.srcObject = stream;
-  };
-
-  // get a local stream, show it in a self-view and add it to be sent
-  navigator.mediaDevices.getUserMedia({
-    audio: true,
-    video: false
-  }).then((stream) => {
-    // addTrack triggers negotiationneeded event
-    // change to addTrack when browser supports it
-    peerConnection.addStream(stream);
   }).catch(logError);
-
-  return peerConnection;
 }
 
 // listen to incoming requests to connect
 function listen(receiver) {
   Meteor.subscribe('incoming-messages', receiver);
-  // since the subscription only gets messages w/
-  // the current user (userProgramId) as receiver
-  // we do a general find here
-  RTCSetupMessages.find().observe({
+  // even though the subscription only gets incoming messages from the server
+  // we need to filter with find b/c of local messages we add to the collection
+  RTCSetupMessages.find({receiver: receiver}).observe({
     added: (message) => {
       console.log('message received');
       var peerConnection = peerConnections[message.sender];
-      // if there is no peer connection with the sender create one
-      // we are the answerer
-      if (!peerConnection) {
-        peerConnection = connect(message.receiver, message.sender);
-      }
+
       // the message is either an SDP or an ICE candidate
       if (message.description) {
         var description = JSON.parse(message.description);
         if (description.type === 'offer') {
+          // if there is no peer connection with the sender create one
+          // we are the answerer
           console.log('processing offer');
-          peerConnection.setRemoteDescription(description).then(() => {
-            return peerConnection.createAnswer();
-          }).then((answer) => {
-            return peerConnection.setLocalDescription(answer);
-          }).then(() => {
-            console.log('sending answer');
-            RTCSetupMessages.insert({
-              sender: message.receiver,
-              receiver: message.sender,
-              description: JSON.stringify(peerConnection.localDescription)
-            });
+          if (!peerConnection) {
+            peerConnection = makePeerConnection(message.receiver, message.sender);
+            peerConnections[message.sender] = peerConnection;
+          }
+          peerConnection.setRemoteDescription(new RTCSessionDescription(description)).then(() => {
+
+            // get a local stream, show it in a self-view and add it to be sent
+            navigator.mediaDevices.getUserMedia({
+              audio: true,
+              video: false
+            }).then((stream) => {
+              // addTrack triggers negotiationneeded event
+              // change to addTrack when browser supports it
+              peerConnection.addStream(stream);
+              return peerConnection.createAnswer();
+            }).then((answer) => {
+              return peerConnection.setLocalDescription(answer);
+            }).then(() => {
+              console.log('sending answer');
+              RTCSetupMessages.insert({
+                sender: message.receiver,
+                receiver: message.sender,
+                description: JSON.stringify(peerConnection.localDescription)
+              });
+            }).catch(logError);
           }).catch(logError);
         } else if (description.type == "answer") {
           console.log('processing answer');
-          peerConnection.setRemoteDescription(description).catch(logError);
+          peerConnection.setRemoteDescription(new RTCSessionDescription(description)).catch(logError);
         } else {
           console.log("Unsupported SDP type.");
         }
       } else {
         console.log('adding ice candidate');
-        var candidate = JSON.parse(message.candidate);
+        var candidate = new RTCIceCandidate(JSON.parse(message.candidate));
         peerConnection.addIceCandidate(candidate).catch(logError);
       }
     }
@@ -134,7 +148,7 @@ export function setupPeerConnections(userProgramId, ProgramsCollection) {
 
   // call already online users
   Programs.find(
-    {type: 'user', online: true, _id: {$ne: self.userProgramId}}
+    {type: 'user', online: true, _id: {$ne: userProgramId}}
   ).forEach((otherUserProgram) => {
     connect(userProgramId, otherUserProgram._id);
   });
