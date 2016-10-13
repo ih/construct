@@ -181,10 +181,10 @@ class Construct {
         'webkitPointerLockElement' in document);
 
     if (havePointerLock) {
+      var userProgram = Programs.findOne(this.userProgramId);
       this.controls = new THREE.PointerLockControls(this.camera);
       this.scene.add(this.controls.getObject());
-      this.controls.getObject().position.fromArray(
-        Programs.findOne(this.userProgramId).position);
+      this.controls.getObject().position.fromArray(userProgram.position);
     } else {
       console.warn('no pointerlock');
       //this.controlsEnabled = false;
@@ -250,7 +250,7 @@ class Construct {
       userProgram, renderedUser, userControls, Programs);
 
     // connect user to peers for real time communication (RTC)
-    this.rtc = new RTC.setupPeerConnections(userProgram._id, Programs);
+    this.rtc = new RTC(userProgram._id, Programs);
   }
 
   render() {
@@ -267,6 +267,7 @@ class Construct {
     this.updatePrograms();
     this.currentUser.updateMovement();
     this.updateOtherUserMeshes();
+    this.rtc.updateAudioPositions();
   }
 
   updateOtherUserMeshes() {

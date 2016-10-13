@@ -255,6 +255,8 @@ Accounts.onCreateUser(function(options, user) {
   var material = new Physijs.createMaterial(
     new THREE.MeshBasicMaterial({color: self.color}), .8, .2);
   var cube = new Physijs.BoxMesh(geometry, material);
+  cube.position.fromArray(self.position);
+  cube.rotation.fromArray(self.rotation);
   return {user: cube};
 }
     `,
