@@ -1,4 +1,5 @@
 import Adapter from 'webrtc-adapter';
+
 var RTCSetupMessages = new Mongo.Collection('rtcsetupmessages');
 var Programs;
 var configuration = {
@@ -73,10 +74,8 @@ export default class RTC {
             peerConnection.setRemoteDescription(new RTCSessionDescription(description)).then(() => {
 
               // get a local stream, show it in a self-view and add it to be sent
-              navigator.mediaDevices.getUserMedia({
-                audio: true,
-                video: false
-              }).then((stream) => {
+              navigator.mediaDevices.getUserMedia(
+                {audio: true, video: false}).then((stream) => {
                 // addTrack triggers negotiationneeded event
                 // change to addTrack when browser supports it
                 peerConnection.addStream(stream);
@@ -119,10 +118,8 @@ export default class RTC {
     this.peerConnections[receiver] = peerConnection;
 
     // get a local stream, show it in a self-view and add it to be sent
-    navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: false
-    }).then((stream) => {
+    navigator.mediaDevices.getUserMedia(
+      {audio: true, video: false}).then((stream) => {
       // addTrack triggers negotiationneeded event
       // change to addTrack when browser supports it
       peerConnection.addStream(stream);
@@ -166,28 +163,46 @@ export default class RTC {
   }
 
   addPeerAudio(stream, peerId) {
+    // var audio = document.querySelector('audio');
+    // audio.srcObject = stream;
     var peerAudioStream = this.audioContext.createMediaStreamSource(stream);
+
+    var voiceActivityDetector = VAD({
+      source: peerAudioStream,
+      voice_stop: function() {console.log('voice_stop');},
+      voice_start: function() {console.log('voice_start');}
+    });
+
     var panner = this.audioContext.createPanner();
+    panner.panningModel = 'HRTF';
+    panner.refDistance = 10;
     peerAudioStream.connect(panner);
     panner.connect(this.audioContext.destination);
+
+    // for chrome we need to connect the remote stream
+    // to a non web-audio output see
+    // comment 102 https://bugs.chromium.org/p/chromium/issues/detail?id=121673
+    var audio = document.querySelector('audio');
+    audio.srcObject = stream;
     this.usersAudioRepresentation[peerId] = panner;
   }
 
-  // called by the update/render function
+  // analyser by the update/render function
   // updates each panner/listener position
   updateAudioPositions() {
-    var currentUserProgram = Programs.findOne(this.currentUserProgramId);
+    var self = this;
+    var currentUserProgram = Programs.findOne(self.currentUserProgramId);
     var [currentX, currentY, currentZ] = currentUserProgram.position;
     Programs.find(
-      {type: 'user', online: true, _id: {$ne: this.currentUserProgramId}}
+      {type: 'user', online: true, _id: {$ne: self.currentUserProgramId}}
     ).forEach((otherUserProgram) => {
-      if (!_.has(this.usersAudioRepresentation, otherUserProgram._id)) {
+      if (!_.has(self.usersAudioRepresentation, otherUserProgram._id)) {
         return;
       }
-      var panner = this.usersAudioRepresentation[otherUserProgram._id];
+      var panner = self.usersAudioRepresentation[otherUserProgram._id];
       var [otherX, otherY, otherZ] = otherUserProgram.position;
       panner.setPosition(otherX, otherY, otherZ);
-      this.audioContext.listener.setPosition(currentX, currentY, currentZ);
+      self.audioContext.listener.setPosition(currentX, currentY, currentZ);
     });
   }
 
