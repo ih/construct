@@ -6,8 +6,12 @@ export default class CurrentUser {
     Programs = ProgramsCollection;
     this.program = userProgram;
     this.renderedMesh = renderedUser;
+    this.renderedHead = _.find(this.renderedMesh.children, (mesh) => {
+      return mesh.name === 'head';
+    });
     this.lastRotation = this.renderedMesh.rotation;
-    this.controls = userControls;
+    this.userControls = userControls;
+    this.controlsObject = userControls.getObject();
     this.initKeyboard();
     this.rotateRight = false;
     this.facingDirection = this.renderedMesh.getWorldDirection();
@@ -76,11 +80,24 @@ export default class CurrentUser {
   }
 
   updateMovement() {
+    // if you add properties to be changed make sure to
+    // update the ProgramHelpers.onlyMovementAttributes
+    // otherwise the init function will be re-run with every update
+    var headRotation = this.getHeadRotation().toArray();
+    console.log(headRotation);
     if (this.isMoving(this.renderedMesh)) {
       _.throttle(() => {
         Programs.update({_id: this.program._id}, {$set: {
           position: this.renderedMesh.position.toArray(),
-          rotation: this.renderedMesh.rotation.toArray()
+          rotation: this.renderedMesh.rotation.toArray(),
+          headRotation: headRotation
+        }});
+      }, 300)();
+    } else {
+      // keep updating the head even if the user is not moving
+      _.throttle(() => {
+        Programs.update({_id: this.program._id}, {$set: {
+          headRotation: headRotation
         }});
       }, 300)();
     }
@@ -105,19 +122,27 @@ export default class CurrentUser {
     if (this.rotateRight) {
       // use rotation.y instead of rotateY b/c the pointer control flips
       // horizontally if you turn too far, why?
-      this.controls.rotation.y += -2 * oneDegree;
+      this.controlsObject.rotation.y += -2 * oneDegree;
       // use rotateY here instead of directly setting rotation.y b/c
       // it gets stuck turning.  why?
       this.renderedMesh.rotateY(-2 * oneDegree);
     } else if (this.rotateLeft) {
-      this.controls.rotation.y += 2 * oneDegree;
+      this.controlsObject.rotation.y += 2 * oneDegree;
       this.renderedMesh.rotateY(2 * oneDegree);
     }
-    //this.controls.rotation.x = Math.max( - Math.PI / 2, Math.min( Math.PI / 2, this.controls.rotation.x ) );
+
+    //this.controlsObject.rotation.x = Math.max( - Math.PI / 2, Math.min( Math.PI / 2, this.controlsObject.rotation.x ) );
     this.renderedMesh.setAngularVelocity(new THREE.Vector3(0, 0, 0));
     this.renderedMesh.__dirtyRotation = true;
     this.renderedMesh.__dirtyPosition = true;
-    this.controls.position.copy(this.renderedMesh.position);
+
+    // have the camera match the position of the user
+    var userControlPosition = this.renderedMesh.position.clone();
+    if (this.renderedHead) {
+      // move the user's view up to head level if there is a head
+      userControlPosition.setFromMatrixPosition(this.renderedHead.matrixWorld);
+    }
+    this.controlsObject.position.copy(userControlPosition);
 
     // used in calculating the delta between frames
     this.lastLastRotation = this.lastRotation;
@@ -134,6 +159,13 @@ export default class CurrentUser {
     var hasAngularVelocity = Math.abs(
       currentRotation._y - this.lastRotation._y) > 0;
     return keyPressed || hasLinearVelocity || hasAngularVelocity;
+  }
+
+  getHeadRotation() {
+    // the pointerlockcontrols consists of a yaw object and a pitch object
+    var yawObject = this.controlsObject;
+    var pitchObject = yawObject.children[0];
+    return new THREE.Euler(pitchObject.rotation.x, yawObject.rotation.y, 0);
   }
 
 };

@@ -29,7 +29,11 @@ Programs.find({type: 'user', online: false}).observeChanges({
 
 Meteor.methods({
   heartbeat: () => {
-    var userId = Meteor.user()._id;
+    var user = Meteor.user();
+    if (!user) {
+      return;
+    }
+    var userId = user._id;
     console.log(`pulse ${userId}`);
     Programs.update({userId: userId}, {$set: {online: true}});
     Heartbeats.upsert({userId: userId}, {$set: {lastUpdated: Date.now(), userId: userId}});
@@ -135,11 +139,11 @@ Programs.allow({
   },
   update: function (userId, doc, fieldNames) {
     var user = Meteor.users.findOne(userId);
-    return _.contains(doc.contributors, user.username) || user.username === 'architect';
+    return user && (_.contains(doc.contributors, user.username) || user.username === 'architect');
   },
   remove: function (userId, doc) {
     var user = Meteor.users.findOne(userId);
-    return _.contains(doc.contributors, user.username) || user.username === 'architect';
+    return user && (_.contains(doc.contributors, user.username) || user.username === 'architect');
   }
 });
 
@@ -250,14 +254,29 @@ Accounts.onCreateUser(function(options, user) {
     initialize:
     `
 (self) => {
-  var geometry = new THREE.CubeGeometry(10, 10, 10);
-  // user mesh MUST be a physijs mesh
-  var material = new Physijs.createMaterial(
+  var userMaterial = new Physijs.createMaterial(
     new THREE.MeshBasicMaterial({color: self.color}), .8, .2);
-  var cube = new Physijs.BoxMesh(geometry, material);
-  cube.position.fromArray(self.position);
-  cube.rotation.fromArray(self.rotation);
-  return {user: cube};
+  var bodyGeometry = new THREE.CubeGeometry(10, 10, 10);
+  var body = new Physijs.BoxMesh(bodyGeometry, userMaterial);
+  body.position.fromArray(self.position);
+  var headGeometry = new THREE.SphereGeometry(4, 32, 32);
+  var head = new Physijs.SphereMesh(headGeometry, userMaterial);
+  head.name = 'head';
+  head.position.y += 8;
+  body.add(head);
+
+  var eyeGeometry = new THREE.CircleGeometry(1);
+  var eyeMaterial = new THREE.MeshBasicMaterial(
+    {color: 'black', side: THREE.DoubleSide});
+  var leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+  leftEye.position.z -= 4;
+  leftEye.position.x += 2;
+  head.add(leftEye);
+  var rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+  rightEye.position.z -= 4;
+  rightEye.position.x -= 2
+  head.add(rightEye);
+  return {user: body};
 }
     `,
     update:
@@ -265,6 +284,10 @@ Accounts.onCreateUser(function(options, user) {
 (renderedObjects, self) => {
   // movement for users is controlled server side
   var user = renderedObjects['user'];
+  var head = _.find(user.children, (mesh) => {
+    return mesh.name === 'head';
+  });
+  head.rotation.fromArray(self.headRotation);
 }
     `
   });

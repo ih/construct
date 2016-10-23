@@ -175,7 +175,7 @@ export default class RTC {
 
     var panner = this.audioContext.createPanner();
     panner.panningModel = 'HRTF';
-    panner.refDistance = 10;
+    panner.refDistance = 3;
     peerAudioStream.connect(panner);
     panner.connect(this.audioContext.destination);
 

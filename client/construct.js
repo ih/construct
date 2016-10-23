@@ -184,7 +184,6 @@ class Construct {
       var userProgram = Programs.findOne(this.userProgramId);
       this.controls = new THREE.PointerLockControls(this.camera);
       this.scene.add(this.controls.getObject());
-      this.controls.getObject().position.fromArray(userProgram.position);
     } else {
       console.warn('no pointerlock');
       //this.controlsEnabled = false;
@@ -245,9 +244,20 @@ class Construct {
   initCurrentUser() {
     var userProgram = Programs.findOne({userId: Meteor.userId()});
     var renderedUser = this.renderedObjects[userProgram._id].user;
-    var userControls = this.controls ? this.controls.getObject() : this.camera;
+    var renderedHead = _.find(renderedUser.children, (mesh) => {
+      return mesh.name === 'head';
+    });
+    var userControlsObject = this.controls.getObject();
+
+    var userControlPosition = renderedUser.position;
+    // get global position of the head
+    // http://stackoverflow.com/a/15098870/1415432
+    if (renderedHead) {
+      userControlPosition.setFromMatrixPosition(renderedHead.matrixWorld);
+    }
+    userControlsObject.position.copy(userControlPosition);
     this.currentUser = new CurrentUser(
-      userProgram, renderedUser, userControls, Programs);
+      userProgram, renderedUser, this.controls, Programs);
 
     // connect user to peers for real time communication (RTC)
     this.rtc = new RTC(userProgram._id, Programs);
@@ -267,7 +277,7 @@ class Construct {
     this.updatePrograms();
     this.currentUser.updateMovement();
     this.updateOtherUserMeshes();
-    this.rtc.updateAudioPositions();
+    //this.rtc.updateAudioPositions();
   }
 
   updateOtherUserMeshes() {
@@ -415,6 +425,14 @@ Template.position.helpers({
       return `${Math.round(radianToDegree(userProgram.rotation[0]))}, ${Math.round(radianToDegree(userProgram.rotation[2]))}, ${Math.round(radianToDegree(userProgram.rotation[1]))}`;
     } else {
       return 'rotation not found';
+    }
+  },
+  userHeadRotation: () => {
+    var userProgram = Programs.findOne({type: 'user', userId: Meteor.userId()});
+    if (userProgram && userProgram.headRotation) {
+      return `${Math.round(radianToDegree(userProgram.headRotation[0]))}, ${Math.round(radianToDegree(userProgram.headRotation[2]))}, ${Math.round(radianToDegree(userProgram.headRotation[1]))}`;
+    } else {
+      return 'head rotation not found';
     }
   }
 });
