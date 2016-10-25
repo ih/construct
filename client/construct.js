@@ -428,12 +428,12 @@ Template.position.helpers({
     }
   },
   userHeadRotation: () => {
-    var userProgram = Programs.findOne({type: 'user', userId: Meteor.userId()});
-    if (userProgram && userProgram.headRotation) {
-      return `${Math.round(radianToDegree(userProgram.headRotation[0]))}, ${Math.round(radianToDegree(userProgram.headRotation[2]))}, ${Math.round(radianToDegree(userProgram.headRotation[1]))}`;
-    } else {
-      return 'head rotation not found';
-    }
+    // var userProgram = Programs.findOne({type: 'user', userId: Meteor.userId()});
+    // if (userProgram && userProgram.headRotation) {
+    //   return `${Math.round(radianToDegree(userProgram.headRotation[0]))}, ${Math.round(radianToDegree(userProgram.headRotation[2]))}, ${Math.round(radianToDegree(userProgram.headRotation[1]))}`;
+    // } else {
+    //   return 'head rotation not found';
+    // }
   }
 });
 

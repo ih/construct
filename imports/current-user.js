@@ -83,7 +83,7 @@ export default class CurrentUser {
     // if you add properties to be changed make sure to
     // update the ProgramHelpers.onlyMovementAttributes
     // otherwise the init function will be re-run with every update
-    var headRotation = this.getHeadRotation().toArray();
+    var headRotation = this.getHeadRotation();
     console.log(headRotation);
     if (this.isMoving(this.renderedMesh)) {
       _.throttle(() => {
@@ -165,7 +165,11 @@ export default class CurrentUser {
     // the pointerlockcontrols consists of a yaw object and a pitch object
     var yawObject = this.controlsObject;
     var pitchObject = yawObject.children[0];
-    return new THREE.Euler(pitchObject.rotation.x, yawObject.rotation.y, 0);
+    // var camera = pitchObject.children[0];
+    return {
+      yawObjectY: yawObject.rotation.y,
+      pitchObjectX: pitchObject.rotation.x
+    };
   }
 
 };

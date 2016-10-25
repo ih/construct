@@ -260,10 +260,15 @@ Accounts.onCreateUser(function(options, user) {
   var body = new Physijs.BoxMesh(bodyGeometry, userMaterial);
   body.position.fromArray(self.position);
   var headGeometry = new THREE.SphereGeometry(4, 32, 32);
-  var head = new Physijs.SphereMesh(headGeometry, userMaterial);
-  head.name = 'head';
-  head.position.y += 8;
-  body.add(head);
+  // based on implementation of PointerLockControls.js
+  var headMesh = new Physijs.SphereMesh(headGeometry, userMaterial);
+  var pitchObject = new THREE.Object3D();
+  pitchObject.add(headMesh);
+  var yawObject = new THREE.Object3D();
+  yawObject.add(pitchObject);
+  yawObject.name = 'head';
+  yawObject.position.y += 8;
+  body.add(yawObject);
 
   var eyeGeometry = new THREE.CircleGeometry(1);
   var eyeMaterial = new THREE.MeshBasicMaterial(
@@ -271,11 +276,11 @@ Accounts.onCreateUser(function(options, user) {
   var leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
   leftEye.position.z -= 4;
   leftEye.position.x += 2;
-  head.add(leftEye);
+  headMesh.add(leftEye);
   var rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
   rightEye.position.z -= 4;
   rightEye.position.x -= 2
-  head.add(rightEye);
+  headMesh.add(rightEye);
   return {user: body};
 }
     `,
@@ -284,10 +289,12 @@ Accounts.onCreateUser(function(options, user) {
 (renderedObjects, self) => {
   // movement for users is controlled server side
   var user = renderedObjects['user'];
-  var head = _.find(user.children, (mesh) => {
+  var yawObject = _.find(user.children, (mesh) => {
     return mesh.name === 'head';
   });
-  head.rotation.fromArray(self.headRotation);
+  yawObject.rotation.y = headRotation.yawObjectY;
+  var pitchObject = yawObject.children[0];
+  pitchObject.rotation.x = headRotation.pitchObjectX;
 }
     `
   });
