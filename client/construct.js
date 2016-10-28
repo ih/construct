@@ -164,7 +164,10 @@ class Construct {
       self.renderedObjects[program._id] = programRenderedObjects;
       if (self.currentUser && program._id === self.currentUser.program._id) {
         self.currentUser.renderedMesh = programRenderedObjects.user;
-
+        self.currentUser.renderedHead = _.find(this.renderedMesh.children, (mesh) => {
+          return mesh.name === 'head';
+        });
+        self.currentUser.renderedHead.add(this.controls.getObject());
       }
     } catch (error) {
       var errorString = error.message;
