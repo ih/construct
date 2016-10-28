@@ -247,18 +247,8 @@ class Construct {
   initCurrentUser() {
     var userProgram = Programs.findOne({userId: Meteor.userId()});
     var renderedUser = this.renderedObjects[userProgram._id].user;
-    var renderedHead = _.find(renderedUser.children, (mesh) => {
-      return mesh.name === 'head';
-    });
     var userControlsObject = this.controls.getObject();
 
-    var userControlPosition = renderedUser.position;
-    // get global position of the head
-    // http://stackoverflow.com/a/15098870/1415432
-    if (renderedHead) {
-      userControlPosition.setFromMatrixPosition(renderedHead.matrixWorld);
-    }
-    userControlsObject.position.copy(userControlPosition);
     this.currentUser = new CurrentUser(
       userProgram, renderedUser, this.controls, Programs);
 
@@ -429,14 +419,6 @@ Template.position.helpers({
     } else {
       return 'rotation not found';
     }
-  },
-  userHeadRotation: () => {
-    // var userProgram = Programs.findOne({type: 'user', userId: Meteor.userId()});
-    // if (userProgram && userProgram.headRotation) {
-    //   return `${Math.round(radianToDegree(userProgram.headRotation[0]))}, ${Math.round(radianToDegree(userProgram.headRotation[2]))}, ${Math.round(radianToDegree(userProgram.headRotation[1]))}`;
-    // } else {
-    //   return 'head rotation not found';
-    // }
   }
 });
 

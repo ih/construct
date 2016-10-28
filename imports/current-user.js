@@ -1,4 +1,4 @@
-
+import MeshHelpers from '../imports/mesh-helpers.js';
 var Programs;
 
 export default class CurrentUser {
@@ -6,9 +6,7 @@ export default class CurrentUser {
     Programs = ProgramsCollection;
     this.program = userProgram;
     this.renderedMesh = renderedUser;
-    this.renderedHead = _.find(this.renderedMesh.children, (mesh) => {
-      return mesh.name === 'head';
-    });
+    this.renderedHead = MeshHelpers.getHead(this.renderedMesh);
     this.lastRotation = this.renderedMesh.rotation;
     this.userControls = userControls;
 
@@ -17,7 +15,6 @@ export default class CurrentUser {
     this.controlsObject.position.y = this.renderedHead.position.y;
     this.initKeyboard();
     this.rotateRight = false;
-    this.facingDirection = this.renderedMesh.getWorldDirection();
     this.movementDisabled = false;
 
     // heartbeat is used to update who is online
@@ -106,44 +103,20 @@ export default class CurrentUser {
     }
 
     var linearVelocity = this.renderedMesh.getLinearVelocity();
-    this.renderedMesh.getWorldDirection(this.facingDirection);
-    this.facingDirection.y = 0;
-
     if (this.moveForward) {
       this.renderedMesh.translateZ(-1);
-      // this.renderedMesh.setLinearVelocity(
-      //   this.facingDirection.multiplyScalar(10));
     } else if (this.moveBackward) {
             this.renderedMesh.translateZ(1);
-      // this.renderedMesh.setLinearVelocity(
-      //   this.facingDirection.multiplyScalar(-10));
     } else {
       this.renderedMesh.setLinearVelocity(linearVelocity);
     }
     var oneDegree = Math.PI / 180;
 
     if (this.rotateRight) {
-      // use rotation.y instead of rotateY b/c the pointer control flips
-      // horizontally if you turn too far, why?
-
-      //this.controlsObject.rotation.y = (this.controlsObject.rotation.y - (2 * oneDegree)) % (Math.PI * 2);
-
-      // use rotateY here instead of directly setting rotation.y b/c
-      // it gets stuck turning.  why?
       this.renderedMesh.rotateY(-2 * oneDegree);
     } else if (this.rotateLeft) {
-
-      //this.controlsObject.rotation.y = (this.controlsObject.rotation.y + (2 * oneDegree)) % (Math.PI * 2);
-
       this.renderedMesh.rotateY(2 * oneDegree);
     }
-
-    console.log(`controls ${this.controlsObject.rotation.toArray()}`);
-    console.log(`wcontrols ${this.controlsObject.getWorldRotation().toArray()}`);
-    console.log(`body ${this.renderedMesh.rotation.toArray()}`);
-    console.log(`head ${this.renderedMesh.children[0].rotation.toArray()}`);
-    console.log(`whead ${this.renderedMesh.children[0].getWorldRotation().toArray()}`);
-    console.log(`head rotation ${headRotation.x} ${headRotation.y}`);
 
     this.renderedMesh.setAngularVelocity(new THREE.Vector3(0, 0, 0));
     this.renderedMesh.__dirtyRotation = true;
@@ -198,6 +171,9 @@ export default class CurrentUser {
       y: headY,
       x: pitchObject.rotation.x
     };
+  }
+
+  initializeMesh() {
   }
 
 };

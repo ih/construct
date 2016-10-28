@@ -292,9 +292,10 @@ Accounts.onCreateUser(function(options, user) {
   var yawObject = _.find(user.children, (mesh) => {
     return mesh.name === 'head';
   });
-  yawObject.rotation.y = headRotation.yawObjectY;
+
+  yawObject.rotation.y = self.headRotation.y;
   var pitchObject = yawObject.children[0];
-  pitchObject.rotation.x = headRotation.pitchObjectX;
+  pitchObject.rotation.x = self.headRotation.x;
 }
     `
   });
