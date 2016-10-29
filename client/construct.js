@@ -267,7 +267,7 @@ class Construct {
     this.updatePrograms();
     this.currentUser.updateMovement();
     this.updateOtherUserMeshes();
-    //this.rtc.updateAudioPositions();
+    this.rtc.updateAudioPositions();
   }
 
   updateOtherUserMeshes() {
