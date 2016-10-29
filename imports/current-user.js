@@ -5,20 +5,27 @@ export default class CurrentUser {
   constructor(userProgram, renderedUser, userControls, ProgramsCollection) {
     Programs = ProgramsCollection;
     this.program = userProgram;
-    this.renderedMesh = renderedUser;
-    this.renderedHead = MeshHelpers.getHead(this.renderedMesh);
-    this.lastRotation = this.renderedMesh.rotation;
     this.userControls = userControls;
-
     this.controlsObject = userControls.getObject();
-    this.renderedMesh.add(this.controlsObject);
-    this.controlsObject.position.y = this.renderedHead.position.y;
+
+    // this is a function b/c it also needs to be called when the user's
+    // program is re-evaluated, which causes a new mesh to be rendered
+    this.initMesh(renderedUser);
+
     this.initKeyboard();
     this.rotateRight = false;
     this.movementDisabled = false;
 
     // heartbeat is used to update who is online
     setInterval(() => {Meteor.call('heartbeat');}, 5000);
+  }
+
+  initMesh(renderedUser) {
+    this.renderedMesh = renderedUser;
+    this.renderedHead = MeshHelpers.getHead(this.renderedMesh);
+    this.lastRotation = this.renderedMesh.rotation;
+    this.renderedMesh.add(this.controlsObject);
+    this.controlsObject.position.y = this.renderedHead.position.y;
   }
 
   initKeyboard() {
@@ -128,7 +135,6 @@ export default class CurrentUser {
       // move the user's view up to head level if there is a head
       userControlPosition.setFromMatrixPosition(this.renderedHead.matrixWorld);
     }
-    // this.controlsObject.position.copy(userControlPosition);
 
     // used in calculating the delta between frames
     this.lastLastRotation = this.lastRotation;
@@ -147,10 +153,6 @@ export default class CurrentUser {
     return keyPressed || hasLinearVelocity || hasAngularVelocity;
   }
 
-  // the head rotation is the angle of the head relative to the body
-  // but the controls and body direction are relative to the world and the
-  // body direction is is a bit weird and has a range from -pi to pi
-  // instead of -2pi to 2pi (a full rotation in either direction)
   getHeadRotation() {
     // the pointerlockcontrols consists of a yaw object and a pitch object
     var yawObject = this.controlsObject;
@@ -158,22 +160,10 @@ export default class CurrentUser {
 
     var bodyRotation = this.renderedMesh.rotation;
 
-    var headY = yawObject.rotation.y;
-    // if x and z are 0 for the mesh
-    // then the mesh y and the controls y
-    // have the same orientation
-    // if (Math.round(bodyRotation.x) === 0) {
-    //   headY = yawObject.rotation.y; - bodyRotation.y;
-    // }
-
-    // var camera = pitchObject.children[0];
     return {
-      y: headY,
+      y: yawObject.rotation.y,
       x: pitchObject.rotation.x
     };
-  }
-
-  initializeMesh() {
   }
 
 };

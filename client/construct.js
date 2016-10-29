@@ -162,12 +162,9 @@ class Construct {
       });
 
       self.renderedObjects[program._id] = programRenderedObjects;
+
       if (self.currentUser && program._id === self.currentUser.program._id) {
-        self.currentUser.renderedMesh = programRenderedObjects.user;
-        self.currentUser.renderedHead = _.find(this.renderedMesh.children, (mesh) => {
-          return mesh.name === 'head';
-        });
-        self.currentUser.renderedHead.add(this.controls.getObject());
+        self.currentUser.initMesh(programRenderedObjects.user);
       }
     } catch (error) {
       var errorString = error.message;
@@ -189,7 +186,7 @@ class Construct {
       this.scene.add(this.controls.getObject());
     } else {
       console.warn('no pointerlock');
-      //this.controlsEnabled = false;
+
       this.controls = null;
     }
   }
