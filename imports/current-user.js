@@ -24,6 +24,7 @@ export default class CurrentUser {
     this.renderedMesh = renderedUser;
     this.renderedHead = MeshHelpers.getHead(this.renderedMesh);
     this.lastRotation = this.renderedMesh.rotation;
+    this.lastHeadRotation = this.getHeadRotation();
     this.renderedMesh.add(this.controlsObject);
     this.controlsObject.position.y = this.renderedHead.position.y;
   }
@@ -92,7 +93,9 @@ export default class CurrentUser {
     // otherwise the init function will be re-run with every update
     var headRotation = this.getHeadRotation();
 
-    if (this.isMoving(this.renderedMesh)) {
+    // update if head or body is moving
+    if (this.isMoving(this.renderedMesh) ||
+        this.lastHeadRotation.x !== headRotation.x || this.lastHeadRotation.y !== headRotation.y) {
       _.throttle(() => {
         Programs.update({_id: this.program._id}, {$set: {
           position: this.renderedMesh.position.toArray(),
@@ -100,14 +103,9 @@ export default class CurrentUser {
           headRotation: headRotation
         }});
       }, 300)();
-    } else {
-      // keep updating the head even if the user is not moving
-      _.throttle(() => {
-        Programs.update({_id: this.program._id}, {$set: {
-          headRotation: headRotation
-        }});
-      }, 300)();
     }
+
+    this.lastHeadRotation = headRotation;
 
     var linearVelocity = this.renderedMesh.getLinearVelocity();
     if (this.moveForward) {
@@ -157,8 +155,6 @@ export default class CurrentUser {
     // the pointerlockcontrols consists of a yaw object and a pitch object
     var yawObject = this.controlsObject;
     var pitchObject = yawObject.children[0];
-
-    var bodyRotation = this.renderedMesh.rotation;
 
     return {
       y: yawObject.rotation.y,
