@@ -272,14 +272,18 @@ Accounts.onCreateUser(function(options, user) {
 
   var eyeGeometry = new THREE.CircleGeometry(1);
   var eyeMaterial = new THREE.MeshBasicMaterial(
-    {color: 'black', side: THREE.DoubleSide});
+    {color: 'black', side: THREE.BackSide});
   var leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
   leftEye.position.z -= 4;
-  leftEye.position.x += 2;
+  leftEye.position.x += 1.5;
+  leftEye.position.y += 1.1;
+  leftEye.rotateY(-Math.PI/6);
   headMesh.add(leftEye);
   var rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
   rightEye.position.z -= 4;
-  rightEye.position.x -= 2
+  rightEye.position.x -= 1.5;
+  rightEye.position.y += 1.1;
+  rightEye.rotateY(Math.PI/6);
   headMesh.add(rightEye);
   return {user: body};
 }
