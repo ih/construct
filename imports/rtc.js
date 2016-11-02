@@ -169,8 +169,16 @@ export default class RTC {
 
     var voiceActivityDetector = VAD({
       source: peerAudioStream,
-      voice_stop: function() {console.log('voice_stop');},
-      voice_start: function() {console.log('voice_start');}
+      voice_stop: () => {
+        Programs.update({_id: this.currentUserProgramId}, {$set: {
+          isSpeaking: false
+        }});
+      },
+      voice_start: () => {
+        Programs.update({_id: this.currentUserProgramId}, {$set: {
+          isSpeaking: true
+        }});
+      }
     });
 
     var panner = this.audioContext.createPanner();

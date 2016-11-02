@@ -157,8 +157,8 @@ export default class CurrentUser {
     var pitchObject = yawObject.children[0];
 
     return {
-      y: yawObject.rotation.y,
-      x: pitchObject.rotation.x
+      x: pitchObject.rotation.x,
+      y: yawObject.rotation.y
     };
   }
 
