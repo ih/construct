@@ -17,7 +17,13 @@ export default class CurrentUser {
     this.movementDisabled = false;
 
     // heartbeat is used to update who is online
-    setInterval(() => {Meteor.call('heartbeat');}, 5000);
+    var heartBeatInterval = setInterval(() => {
+      if (Meteor.userId()) {
+        Meteor.call('heartbeat');
+      } else {
+        clearInterval(heartBeatInterval);
+      }
+    }, 5000);
   }
 
   initMesh(renderedUser) {
