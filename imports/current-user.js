@@ -135,13 +135,6 @@ export default class CurrentUser {
     this.renderedMesh.__dirtyRotation = true;
     this.renderedMesh.__dirtyPosition = true;
 
-    // have the camera match the position of the user
-    var userControlPosition = this.renderedMesh.position.clone();
-    if (this.renderedHead) {
-      // move the user's view up to head level if there is a head
-      userControlPosition.setFromMatrixPosition(this.renderedHead.matrixWorld);
-    }
-
     // used in calculating the delta between frames
     this.lastLastRotation = this.lastRotation;
     this.lastRotation = this.renderedMesh.rotation;

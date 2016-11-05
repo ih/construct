@@ -42,22 +42,6 @@ canvas {
     color: red;
 }
 
-.user-controls-rotation {
-    position: fixed;
-    top: 50px;
-    left: 50%;
-    z-index: 100;
-    color: green;
-}
-
-.user-head-rotation {
-    position: fixed;
-    top: 50px;
-    left: 50%;
-    z-index: 100;
-    color: blue;
-}
-
 #login-buttons {
     z-index: 1000;
     position: fixed;

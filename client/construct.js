@@ -244,7 +244,6 @@ class Construct {
   initCurrentUser() {
     var userProgram = Programs.findOne({userId: Meteor.userId()});
     var renderedUser = this.renderedObjects[userProgram._id].user;
-    var userControlsObject = this.controls.getObject();
 
     this.currentUser = new CurrentUser(
       userProgram, renderedUser, this.controls, Programs);
@@ -411,14 +410,6 @@ Template.position.helpers({
       return `${Math.round(position.x)}, ${Math.round(position.z)}, ${Math.round(position.y)}`;
     } else {
       return 'position not found';
-    }
-  },
-  userRotation: () => {
-    var userProgram = Programs.findOne({type: 'user', userId: Meteor.userId()});
-    if (userProgram) {
-      return `${Math.round(radianToDegree(userProgram.rotation[0]))}, ${Math.round(radianToDegree(userProgram.rotation[2]))}, ${Math.round(radianToDegree(userProgram.rotation[1]))}`;
-    } else {
-      return 'rotation not found';
     }
   }
 });
