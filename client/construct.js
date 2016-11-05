@@ -3,6 +3,7 @@ import CurrentUser from '../imports/current-user.js';
 import ProgramHelpers from '../imports/program-helpers.js';
 import MathHelpers from '../imports/math-helpers.js';
 import Eval from '../imports/eval.js';
+import RTC from '../imports/rtc.js';
 
 var Programs = new Mongo.Collection('programs');
 // https://github.com/josdirksen/learning-threejs/blob/master/chapter-09/07-first-person-camera.html
@@ -161,15 +162,14 @@ class Construct {
       });
 
       self.renderedObjects[program._id] = programRenderedObjects;
-      if (program._id === self.currentUser.program._id) {
-        self.currentUser.renderedMesh = programRenderedObjects.user;
 
+      if (self.currentUser && program._id === self.currentUser.program._id) {
+        self.currentUser.initMesh(programRenderedObjects.user);
       }
-
     } catch (error) {
       var errorString = error.message;
       console.warn(
-        `Problem initializing program ${program._id}: ${errorString}`);
+        `Problem initializing program ${program.name}: ${errorString}`);
     }
   }
 
@@ -181,13 +181,12 @@ class Construct {
         'webkitPointerLockElement' in document);
 
     if (havePointerLock) {
+      var userProgram = Programs.findOne(this.userProgramId);
       this.controls = new THREE.PointerLockControls(this.camera);
       this.scene.add(this.controls.getObject());
-      this.controls.getObject().position.fromArray(
-        Programs.findOne(this.userProgramId).position);
     } else {
       console.warn('no pointerlock');
-      //this.controlsEnabled = false;
+
       this.controls = null;
     }
   }
@@ -200,10 +199,6 @@ class Construct {
 
   initGLRenderer() {
     this.glRenderer = new THREE.WebGLRenderer( {antialias: true, alpha: true});
-    // } else {
-    //   this.glRenderer = new THREE.CanvasRenderer();
-    // }
-    //this.glRenderer.setSize(this.screenWidth, this.screenHeight);
     this.glRenderer.setPixelRatio(window.devicePixelRatio);
     this.glRenderer.setClearColor( 0xffffff );
     this.glRenderer.setSize(this.screenWidth, this.screenHeight);
@@ -249,9 +244,16 @@ class Construct {
   initCurrentUser() {
     var userProgram = Programs.findOne({userId: Meteor.userId()});
     var renderedUser = this.renderedObjects[userProgram._id].user;
-    var userControls = this.controls ? this.controls.getObject() : this.camera;
+
     this.currentUser = new CurrentUser(
-      userProgram, renderedUser, userControls, Programs);
+      userProgram, renderedUser, this.controls, Programs);
+
+    // connect user to peers for real time communication (RTC)
+    this.rtc = new RTC(userProgram._id, Programs);
+
+    this.throttledRTCUpdate = _.throttle(() => {
+      this.rtc.updateAudioPositions();
+    }, 300);
   }
 
   render() {
@@ -268,6 +270,7 @@ class Construct {
     this.updatePrograms();
     this.currentUser.updateMovement();
     this.updateOtherUserMeshes();
+    this.throttledRTCUpdate();
   }
 
   updateOtherUserMeshes() {
@@ -407,14 +410,6 @@ Template.position.helpers({
       return `${Math.round(position.x)}, ${Math.round(position.z)}, ${Math.round(position.y)}`;
     } else {
       return 'position not found';
-    }
-  },
-  userRotation: () => {
-    var userProgram = Programs.findOne({type: 'user', userId: Meteor.userId()});
-    if (userProgram) {
-      return `${Math.round(radianToDegree(userProgram.rotation[0]))}, ${Math.round(radianToDegree(userProgram.rotation[2]))}, ${Math.round(radianToDegree(userProgram.rotation[1]))}`;
-    } else {
-      return 'rotation not found';
     }
   }
 });

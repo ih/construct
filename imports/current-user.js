@@ -1,17 +1,46 @@
-
+import MeshHelpers from '../imports/mesh-helpers.js';
 var Programs;
 
 export default class CurrentUser {
   constructor(userProgram, renderedUser, userControls, ProgramsCollection) {
     Programs = ProgramsCollection;
     this.program = userProgram;
-    this.renderedMesh = renderedUser;
-    this.lastRotation = this.renderedMesh.rotation;
-    this.controls = userControls;
+    this.userControls = userControls;
+    this.controlsObject = userControls.getObject();
+
+    // this is a function b/c it also needs to be called when the user's
+    // program is re-evaluated, which causes a new mesh to be rendered
+    this.initMesh(renderedUser);
+
     this.initKeyboard();
     this.rotateRight = false;
-    this.facingDirection = this.renderedMesh.getWorldDirection();
     this.movementDisabled = false;
+
+    this.updateProgramState = _.throttle(() => {
+        Programs.update({_id: this.program._id}, {$set: {
+          position: this.renderedMesh.position.toArray(),
+          rotation: this.renderedMesh.rotation.toArray(),
+          headRotation: this.getHeadRotation()
+        }});
+    }, 100);
+
+    // heartbeat is used to update who is online
+    var heartBeatInterval = setInterval(() => {
+      if (Meteor.userId()) {
+        Meteor.call('heartbeat');
+      } else {
+        clearInterval(heartBeatInterval);
+      }
+    }, 5000);
+  }
+
+  initMesh(renderedUser) {
+    this.renderedMesh = renderedUser;
+    this.renderedHead = MeshHelpers.getHead(this.renderedMesh);
+    this.lastRotation = this.renderedMesh.rotation;
+    this.lastHeadRotation = this.getHeadRotation();
+    this.renderedMesh.add(this.controlsObject);
+    this.controlsObject.position.y = this.renderedHead.position.y;
   }
 
   initKeyboard() {
@@ -73,48 +102,38 @@ export default class CurrentUser {
   }
 
   updateMovement() {
-    if (this.isMoving(this.renderedMesh)) {
-      _.throttle(() => {
-        Programs.update({_id: this.program._id}, {$set: {
-          position: this.renderedMesh.position.toArray(),
-          rotation: this.renderedMesh.rotation.toArray()
-        }});
-      }, 300)();
+    // if you add properties to be changed make sure to
+    // update the ProgramHelpers.onlyMovementAttributes
+    // otherwise the init function will be re-run with every update
+    var headRotation = this.getHeadRotation();
+
+    // update if head or body is moving
+    if (this.isMoving(this.renderedMesh) ||
+        this.lastHeadRotation.x !== headRotation.x || this.lastHeadRotation.y !== headRotation.y) {
+      this.updateProgramState();
     }
 
-    var linearVelocity = this.renderedMesh.getLinearVelocity();
-    this.renderedMesh.getWorldDirection(this.facingDirection);
-    this.facingDirection.y = 0;
+    this.lastHeadRotation = headRotation;
 
+    var linearVelocity = this.renderedMesh.getLinearVelocity();
     if (this.moveForward) {
       this.renderedMesh.translateZ(-1);
-      // this.renderedMesh.setLinearVelocity(
-      //   this.facingDirection.multiplyScalar(10));
     } else if (this.moveBackward) {
             this.renderedMesh.translateZ(1);
-      // this.renderedMesh.setLinearVelocity(
-      //   this.facingDirection.multiplyScalar(-10));
     } else {
       this.renderedMesh.setLinearVelocity(linearVelocity);
     }
     var oneDegree = Math.PI / 180;
 
     if (this.rotateRight) {
-      // use rotation.y instead of rotateY b/c the pointer control flips
-      // horizontally if you turn too far, why?
-      this.controls.rotation.y += -2 * oneDegree;
-      // use rotateY here instead of directly setting rotation.y b/c
-      // it gets stuck turning.  why?
       this.renderedMesh.rotateY(-2 * oneDegree);
     } else if (this.rotateLeft) {
-      this.controls.rotation.y += 2 * oneDegree;
       this.renderedMesh.rotateY(2 * oneDegree);
     }
-    //this.controls.rotation.x = Math.max( - Math.PI / 2, Math.min( Math.PI / 2, this.controls.rotation.x ) );
+
     this.renderedMesh.setAngularVelocity(new THREE.Vector3(0, 0, 0));
     this.renderedMesh.__dirtyRotation = true;
     this.renderedMesh.__dirtyPosition = true;
-    this.controls.position.copy(this.renderedMesh.position);
 
     // used in calculating the delta between frames
     this.lastLastRotation = this.lastRotation;
@@ -131,6 +150,17 @@ export default class CurrentUser {
     var hasAngularVelocity = Math.abs(
       currentRotation._y - this.lastRotation._y) > 0;
     return keyPressed || hasLinearVelocity || hasAngularVelocity;
+  }
+
+  getHeadRotation() {
+    // the pointerlockcontrols consists of a yaw object and a pitch object
+    var yawObject = this.controlsObject;
+    var pitchObject = yawObject.children[0];
+
+    return {
+      x: pitchObject.rotation.x,
+      y: yawObject.rotation.y
+    };
   }
 
 };
