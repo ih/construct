@@ -251,6 +251,10 @@ class Construct {
 
     // connect user to peers for real time communication (RTC)
     this.rtc = new RTC(userProgram._id, Programs);
+
+    this.throttledRTCUpdate = _.throttle(() => {
+      this.rtc.updateAudioPositions();
+    }, 300);
   }
 
   render() {
@@ -267,9 +271,7 @@ class Construct {
     this.updatePrograms();
     this.currentUser.updateMovement();
     this.updateOtherUserMeshes();
-    _.throttle(() => {
-      this.rtc.updateAudioPositions();
-    }, 300)();
+    this.throttledRTCUpdate();
   }
 
   updateOtherUserMeshes() {

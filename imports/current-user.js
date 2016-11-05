@@ -16,6 +16,14 @@ export default class CurrentUser {
     this.rotateRight = false;
     this.movementDisabled = false;
 
+    this.updateProgramState = _.throttle(() => {
+        Programs.update({_id: this.program._id}, {$set: {
+          position: this.renderedMesh.position.toArray(),
+          rotation: this.renderedMesh.rotation.toArray(),
+          headRotation: this.getHeadRotation()
+        }});
+    }, 100);
+
     // heartbeat is used to update who is online
     var heartBeatInterval = setInterval(() => {
       if (Meteor.userId()) {
@@ -102,13 +110,7 @@ export default class CurrentUser {
     // update if head or body is moving
     if (this.isMoving(this.renderedMesh) ||
         this.lastHeadRotation.x !== headRotation.x || this.lastHeadRotation.y !== headRotation.y) {
-      _.throttle(() => {
-        Programs.update({_id: this.program._id}, {$set: {
-          position: this.renderedMesh.position.toArray(),
-          rotation: this.renderedMesh.rotation.toArray(),
-          headRotation: headRotation
-        }});
-      }, 300)();
+      this.updateProgramState();
     }
 
     this.lastHeadRotation = headRotation;
