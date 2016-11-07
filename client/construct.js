@@ -281,9 +281,8 @@ class Construct {
       }
       try {
         var userMesh = this.renderedObjects[userProgram._id].user;
-
-        if (userMesh.position.x != userProgram.position[0] || userMesh.position.y != userProgram.position[1])  {
-          var newPosition = new THREE.Vector3().fromArray(userProgram.position);
+        var newPosition = new THREE.Vector3().fromArray(userProgram.position);
+        if (Math.round(newPosition.distanceTo(userMesh.position)) > 0)  {
           var tween = new TWEEN.Tween(userMesh.position).to(newPosition, 100).start();
         }
         TWEEN.update();
