@@ -4,6 +4,7 @@ import ProgramHelpers from '../imports/program-helpers.js';
 import MathHelpers from '../imports/math-helpers.js';
 import Eval from '../imports/eval.js';
 import RTC from '../imports/rtc.js';
+import TWEEN from 'tween';
 
 var Programs = new Mongo.Collection('programs');
 // https://github.com/josdirksen/learning-threejs/blob/master/chapter-09/07-first-person-camera.html
@@ -280,6 +281,11 @@ class Construct {
       }
       try {
         var userMesh = this.renderedObjects[userProgram._id].user;
+        var newPosition = new THREE.Vector3().fromArray(userProgram.position);
+        if (Math.round(newPosition.distanceTo(userMesh.position)) > 0)  {
+          var tween = new TWEEN.Tween(userMesh.position).to(newPosition, 100).start();
+        }
+        TWEEN.update();
         userMesh.position.fromArray(userProgram.position);
         userMesh.rotation.fromArray(userProgram.rotation);
         userMesh.__dirtyRotation = true;
