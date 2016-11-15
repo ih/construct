@@ -1,4 +1,5 @@
 import {runMigrations} from '../imports/migrations.js';
+import {Email} from 'meteor/email';
 
 Programs = new Mongo.Collection('programs');
 Programs._collection._ensureIndex({name: 1}, {unique: true});
@@ -38,8 +39,17 @@ Meteor.methods({
       return;
     }
     var userId = user._id;
-    console.log(`pulse ${userId}`);
-    Programs.update({userId: userId}, {$set: {online: true}});
+    var userProgram = Programs.findOne({userId: userId});
+    if (!userProgram.online) {
+      Programs.update({userId: userId}, {$set: {online: true}});
+      if (userProgram.name !== 'architect' && userProgram.name !== 'irvin') {
+        Email.send({
+          from: 'admin@construct.club',
+          to: 'irvin.hwang@gmail.com',
+          subject: `${userProgram.name} just logged in!`
+        });
+      }
+    }
     Heartbeats.upsert({userId: userId}, {$set: {lastUpdated: Date.now(), userId: userId}});
   }
 });
