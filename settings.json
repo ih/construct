@@ -1,7 +1,8 @@
 {
   "galaxy.meteor.com": {
       "env": {
-          "MONGO_URL": "mongodb://ih:dr0wss4P!@ds043972.mlab.com:43972/construct"
+          "MONGO_URL": "mongodb://ih:dr0wss4P!@ds043972.mlab.com:43972/construct",
+          "MAIL_URL": smtp://postmaster@construct.club:9f65da90a384db3f782f643f63d8cb47@smtp.mailgun.org:465
       },
       "log_level": "warning"
   }
