@@ -3,25 +3,12 @@ import Adapter from 'webrtc-adapter';
 var RTCSetupMessages = new Mongo.Collection('rtcsetupmessages');
 var Programs;
 var configuration = {
-  'iceServers': [
-    {
-      'url': 'stun:stun.l.google.com:19302'
-    },
-    {
-      'url': 'turn:192.158.29.39:3478?transport=udp',
-      'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-      'username': '28224511:1379330808'
-    },
-    {
-      'url': 'turn:192.158.29.39:3478?transport=tcp',
-      'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-      'username': '28224511:1379330808'
-    }
-  ]
+  'iceServers': Meteor.settings.public.RTC_ICE
 };
 
 export default class RTC {
   constructor(currentUserProgramId, ProgramsCollection) {
+    console.log(Meteor.settings.public.RTC_ICE);
     // keys are other user program ids the current user is connected to
     this.peerConnections = {};
     // keys are other user program ids
