@@ -30,11 +30,11 @@
 
   {{#if getMouseView}}
     <div class="button disable-mouse-view mouse-view-toggle">
-      Press 'esc' to disable mouse view. <br> Use 'w' 'a' 's' and 'd' to move around.
+      Press 'esc' to disable mouse view.
     </div>
   {{else}}
     <div class="button enable-mouse-view mouse-view-toggle">
-      Click here to look around with your mouse.
+      Use the arrow keys to move around (or 'w', 'a', 's', 'd'). <br> Click here to look around with your mouse.
     </div>
     {{#if editorOpen}}
       <div class="button close-editor">Close Editor</div>
@@ -43,7 +43,7 @@
         {{#if editorReady}}
           <div class="button open-editor">Open Editor ('e')</div>
           <div class="button create-program">Create Program ('c')</div>
-          <div class="button create-module">Create Module ('m')</div>
+          <!--  div class="button create-module">Create Module ('m')</div -->
         {{/if}}
       </div>
     {{/if}}

@@ -45,6 +45,7 @@ class Construct {
     this.initCamera();
     this.initMouse();
     this.initCurrentUser();
+    this.initUI();
     this.initGLRenderer();
 
     this.initWebVR();
@@ -255,6 +256,23 @@ class Construct {
     this.throttledRTCUpdate = _.throttle(() => {
       this.rtc.updateAudioPositions();
     }, 300);
+  }
+
+  initUI() {
+    var onKeyDown = (event) => {
+      if (this.currentUser.movementDisabled) {
+        return;
+      }
+      switch (event.key) {
+        case 'c':
+          this.createProgram();
+          break;
+        case 'm':
+          this.createModule();
+          break;
+      }
+    };
+    document.addEventListener('keydown', onKeyDown, false);
   }
 
   render() {
