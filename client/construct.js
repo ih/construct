@@ -47,12 +47,17 @@ class Construct {
     this.initCurrentUser();
     this.initUI();
     this.initGLRenderer();
+    this.initCSSRenderer();
 
     this.initWebVR();
     this.initEvents();
     this.initEditor();
 
-    this.$container.append(this.glRenderer.domElement);
+    this.cssTest();
+
+    // this.$container.append(this.glRenderer.domElement);
+    this.$container.append(this.cssRenderer.domElement);
+    this.cssRenderer.domElement.appendChild(this.glRenderer.domElement);
     Session.set('constructReady', true);
   }
 
@@ -84,6 +89,78 @@ class Construct {
         self.activateEditor();
       }
     });
+  }
+
+  cssTest() {
+
+    // create the iframe element
+    var url = 'http://threejs.org/';
+    var domElement = document.createElement('iframe');
+    var elementWidth = 1024;
+    var planeWidth = 100;
+    var planeHeight = 50;
+    var aspectRatio = planeHeight / planeWidth;
+    var elementHeight = elementWidth * aspectRatio;
+
+    domElement.style.width  = elementWidth + "px";
+    domElement.style.height = elementHeight + "px";
+    var scale = .1;//1 / ( window.innerWidth / 61.7 );
+    domElement.src = url;
+    domElement.style.border = 'none';
+
+    // domElement.style.width = '100px';
+    // domElement.style.height = '100px';
+    domElement.style.opacity = 0.5;
+    var object = new THREE.CSS3DObject(domElement);
+    object.position.x = 0;
+    object.position.y = 30;
+    object.position.z = 0;
+    object.scale.x = scale;
+    object.scale.y = scale;
+    object.scale.z = scale;
+
+    var geometry = new THREE.PlaneGeometry( 100, 50 );
+    var material = new THREE.MeshBasicMaterial( { color: 0x000000, side: THREE.DoubleSide, opacity: 0 } );
+
+    var mesh = new THREE.Mesh( geometry, material );
+    mesh.position.copy( object.position );
+    // mesh.scale.copy( object.scale );
+    this.scene.add( mesh );
+    this.cssScene.add(object);
+    // var mixerPlane = new THREEx.HtmlMixer.Plane(this.mixerContext, domElement);
+    // mixerPlane.object3d.scale.multiplyScalar(.1);
+    //this.scene.add(mixerPlane.object3d);
+
+
+    // var planeWidth = 100;
+    // var planeHeight = 50;
+    // var planeMaterial   = new THREE.MeshBasicMaterial({color: 0x000000, opacity: 0.1, side: THREE.DoubleSide });
+    // var planeGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+    // var planeMesh= new THREE.Mesh(planeGeometry, planeMaterial);
+
+    // planeMesh.position.y += planeHeight/2;
+    // planeMesh.position.x = 0;
+    // planeMesh.position.z = 0;
+    // this.scene.add(planeMesh);
+
+
+    // var element = document.createElement('iframe');
+    // element.src = 'https://www.skillshare.com/';
+    // var elementWidth = 1024;
+    // // force iframe to have same relative dimensions as planeGeometry
+    // var aspectRatio = planeHeight / planeWidth;
+    // var elementHeight = elementWidth * aspectRatio;
+    // element.style.width  = elementWidth + "px";
+    // element.style.height = elementHeight + "px";
+    // var cssObject = new THREE.CSS3DObject(element);
+    // var scale = 1 / ( window.innerWidth / 61.7 );
+    // cssObject.scale.x = scale;
+    // cssObject.scale.y = scale;
+    // cssObject.scale.z = scale;
+
+    // cssObject.position = planeMesh.position;
+    // cssObject.rotation = planeMesh.rotation;
+    // this.cssScene.add(cssObject);
   }
 
   activateEditor() {
@@ -186,6 +263,7 @@ class Construct {
       var userProgram = Programs.findOne(this.userProgramId);
       this.controls = new THREE.PointerLockControls(this.camera);
       this.scene.add(this.controls.getObject());
+      this.cssScene.add(this.controls.getObject());
     } else {
       console.warn('no pointerlock');
 
@@ -200,11 +278,50 @@ class Construct {
   }
 
   initGLRenderer() {
-    this.glRenderer = new THREE.WebGLRenderer( {antialias: true, alpha: true});
+    this.glRenderer = new THREE.WebGLRenderer( { alpha: true});
     this.glRenderer.setPixelRatio(window.devicePixelRatio);
-    this.glRenderer.setClearColor( 0xffffff );
+    // this.glRenderer.setClearColor(0xECF8FF);
+    //this.glRenderer.setClearColor( 0xffffff );
+    this.glRenderer.setClearColor( 0x000000 );
     this.glRenderer.setSize(this.screenWidth, this.screenHeight);
     this.glRenderer.shadowMap.enabled = true;
+    this.glRenderer.domElement.style.position = 'absolute';
+    this.glRenderer.domElement.style.zIndex = 1;
+    this.glRenderer.domElement.style.top = 0;
+  }
+
+  initCSSRenderer() {
+    this.cssRenderer = new THREE.CSS3DRenderer();
+    var css3dElement = this.cssRenderer.domElement;
+    this.cssRenderer.setSize(this.screenWidth, this.screenHeight);
+    css3dElement.style.position = 'absolute';
+    css3dElement.style.top = '0px';
+    css3dElement.style.width = '100%';
+    css3dElement.style.height = '100%';
+    css3dElement.style.zIndex = 0;
+
+    // this.mixerContext= new THREEx.HtmlMixer.Context(this.glRenderer, this.scene, this.camera);
+    // window.addEventListener('resize', function(){
+    //   this.mixerContext.rendererCss.setSize(window.innerWidth, window.innerHeight);
+    // }, false);
+    // this.cssRenderer = this.mixerContext.rendererCss;
+    // this.cssRenderer.setSize(this.screenWidth, this.screenHeight);
+
+    // var rendererWebgl = this.mixerContext.rendererWebgl;
+
+    // var css3dElement = this.cssRenderer.domElement;
+    // css3dElement.style.position = 'absolute';
+    // css3dElement.style.top = '0px';
+    // css3dElement.style.width = '100%';
+    // css3dElement.style.height = '100%';
+
+    // var webglCanvas = rendererWebgl.domElement;
+    // webglCanvas.style.position = 'absolute';
+    // webglCanvas.style.top = '0px';
+    // webglCanvas.style.width = '100%';
+    // webglCanvas.style.height = '100%';
+    // webglCanvas.style.pointerEvents = 'none';
+    // css3dElement.appendChild(webglCanvas);
   }
 
   initWebVR() {
@@ -235,6 +352,7 @@ class Construct {
       this.camera.aspect = window.innerWidth / window.innerHeight;
       this.camera.updateProjectionMatrix();
       this.vrEffect.setSize( window.innerWidth, window.innerHeight );
+      this.cssRenderer.setSize(window.innerWidth, window.innerHeight);
     }, false);
   }
 
@@ -282,7 +400,9 @@ class Construct {
 
     this.vrControls.update();
     this.scene.simulate();
+    // this.mixerContext.update();
     this.vrEffect.render(this.scene, this.camera);
+    this.cssRenderer.render(this.cssScene, this.camera);
   }
 
   update() {
