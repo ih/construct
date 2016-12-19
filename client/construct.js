@@ -211,23 +211,22 @@ class Construct {
     var self = this;
     var fullScreenButton = $('.full-screen')[0];
 
-    if ( navigator.getVRDisplays === undefined && navigator.getVRDevices === undefined ) {
-
+    if (WEBVR.isAvailable() === false) {
       fullScreenButton.innerHTML = 'Your browser doesn\'t support WebVR';
       fullScreenButton.classList.add('error');
-
     }
     this.vrControls = new THREE.VRControls(this.camera);
     this.vrEffect = new THREE.VREffect(this.glRenderer, (error) => {
       fullScreenButton.innerHTML = error;
       fullScreenButton.classList.add('error');
     });
-
-    fullScreenButton.onclick = function() {
-      self.vrEffect.setFullScreen( true );
-
-    };
-    this.vrEffect.setSize(window.innerWidth, window.innerHeight);
+    if (navigator.getVRDisplays) {
+        navigator.getVRDisplays().then((displays) => {
+            self.vrEffect.setVRDisplay(displays[0]);
+            self.vrControls.setVRDisplay(displays[0]);
+        });
+        fullScreenButton.appendChild(WEBVR.getButton(self.vrEffect));
+    }
   }
 
   initEvents() {
@@ -417,7 +416,7 @@ Template.construct.onRendered(() => {
     Session.set('constructInitialized', true);
     construct.render();
     function animate() {
-      requestAnimationFrame(animate);
+      construct.vrEffect.requestAnimationFrame(animate);
       construct.update();
       construct.render();
     }
