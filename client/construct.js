@@ -4,7 +4,9 @@ import ProgramHelpers from '../imports/program-helpers.js';
 import MathHelpers from '../imports/math-helpers.js';
 import Eval from '../imports/eval.js';
 import RTC from '../imports/rtc.js';
+import ConscriptCompiler from '../imports/conscript-compiler.js';
 import TWEEN from 'tween';
+
 
 var Programs = new Mongo.Collection('programs');
 // https://github.com/josdirksen/learning-threejs/blob/master/chapter-09/07-first-person-camera.html
@@ -421,6 +423,10 @@ Template.construct.onRendered(() => {
       construct.render();
     }
     animate();
+
+    let conscriptCompiler = new ConscriptCompiler();
+    let programObject3D = conscriptCompiler.textToObject3D('let a = 3;');
+    console.log(programObject3D);
   });
 
 });
