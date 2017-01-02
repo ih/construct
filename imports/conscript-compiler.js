@@ -1,3 +1,5 @@
+import walk from 'esprima-walk';
+
 export default class ConscriptCompiler {
 
   constructor() {
@@ -11,6 +13,19 @@ export default class ConscriptCompiler {
   }
 
   astToObject3D(ast) {
+    let programObject = new THREE.Object3D();
+    walk(ast, (node) => {
+      console.log(node.type);
+    });
     return ast;
   }
 };
+
+class ASTObject3DMapping {
+  constructor() {
+
+  }
+
+
+
+}
