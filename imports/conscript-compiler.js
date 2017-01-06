@@ -1,4 +1,5 @@
 import walk from 'esprima-walk';
+import shortid from 'shortid';
 
 export default class ConscriptCompiler {
 
@@ -14,8 +15,10 @@ export default class ConscriptCompiler {
 
   astToObject3D(ast) {
     let programObject = new THREE.Object3D();
-    walk(ast, (node) => {
+    walk.walkAddParent(ast, (node) => {
       console.log(node.type);
+      node.id = shortid.generate();
+      console.log(node.parent);
     });
     return ast;
   }
